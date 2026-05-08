@@ -1,0 +1,65 @@
+@model Website_Selling_Phones.Models.ShoppingCart
+@{
+    ViewData["Title"] = "Checkout";
+    Layout = "_ItemLayout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h2 class="fw-bold mb-4"><i class="bi bi-credit-card me-2"></i>Checkout</h2>
+
+        <form method="post" action="/Order/PlaceOrder">
+            <div class="row g-4">
+                <div class="col-md-8">
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h5 class="fw-bold mb-3">Shipping Address</h5>
+                            <div class="mb-3">
+                                <textarea name="shippingAddress" class="form-control" rows="3" placeholder="Enter your full shipping address" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="fw-bold mb-3">Payment Method</h5>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="paymentMethod" value="Credit Card" id="cc" checked>
+                                <label class="form-check-label" for="cc">💳 Credit Card</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="paymentMethod" value="PayPal" id="pp">
+                                <label class="form-check-label" for="pp">🅿 PayPal</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="paymentMethod" value="COD" id="cod">
+                                <label class="form-check-label" for="cod">💵 Cash on Delivery</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="fw-bold mb-3">Order Summary</h5>
+                            @foreach (var item in Model.Items)
+                            {
+                                <div class="d-flex justify-content-between small mb-2">
+                                    <span>@item.Phone?.Name x @item.Quantity</span>
+                                    <span>$@((item.Phone?.DiscountedPrice ?? 0) * item.Quantity).ToString("F2")</span>
+                                </div>
+                            }
+                            <hr>
+                            <div class="d-flex justify-content-between mb-3">
+                                <strong>Total</strong>
+                                <strong class="text-primary fs-5">$@Model.TotalPrice.ToString("F2")</strong>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 btn-lg">
+                                <i class="bi bi-check-circle me-2"></i>Place Order
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

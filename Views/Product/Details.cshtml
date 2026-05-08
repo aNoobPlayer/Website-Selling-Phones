@@ -4,20 +4,47 @@
     Layout = "_ItemLayout";
     var calculatedPrice = ViewData["CalculatedPrice"] as decimal?;
     var promoMessage = ViewData["PromoMessage"] as string;
+    var reviews = ViewData["Reviews"] as List<Website_Selling_Phones.Models.Review> ?? new();
+    var avgRating = reviews.Any() ? Math.Round(reviews.Average(r => r.Rating), 1) : 0;
 }
 
 <div class="row g-5">
-    <!-- Product Gallery -->
     <div class="col-lg-6">
         <figure class="product-gallery">
             <img src="@Model.ImageUrl" class="img-fluid w-100" alt="@Model.Name" style="min-height: 450px; object-fit: cover;">
-            <figcaption class="gallery-badge @Model.ConditionBadgeClass">
-                @Model.ConditionDisplayName
-            </figcaption>
+            <figcaption class="gallery-badge @Model.ConditionBadgeClass">@Model.ConditionDisplayName</figcaption>
         </figure>
+
+        <!-- Reviews Section -->
+        <div class="mt-4">
+            <h4 class="fw-bold mb-3">
+                <i class="bi bi-star-fill text-warning me-1"></i>
+                @(avgRating > 0 ? $"{avgRating} / 5" : "No Reviews Yet")
+                <small class="text-muted fs-6">(@reviews.Count reviews)</small>
+            </h4>
+
+            @foreach (var review in reviews.Take(5))
+            {
+                <div class="border rounded p-3 mb-2 bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong>@review.UserName</strong>
+                        <small class="text-muted">@review.CreatedAt.ToString("MMM dd")</small>
+                    </div>
+                    <div class="mb-1">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <i class="bi @(i <= review.Rating ? "bi-star-fill text-warning" : "bi-star text-muted") small"></i>
+                        }
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(review.Comment))
+                    {
+                        <p class="mb-0 small">@review.Comment</p>
+                    }
+                </div>
+            }
+        </div>
     </div>
 
-    <!-- Product Details -->
     <div class="col-lg-6">
         <header class="mb-4">
             <span class="brand-label mb-2 d-block">@Model.Brand</span>
@@ -25,7 +52,6 @@
             <p class="text-muted">@Model.Description</p>
         </header>
 
-        <!-- Dynamic Pricing -->
         <div class="pricing-block mb-4">
             @if (Model.DiscountPercentage > 0)
             {
@@ -36,116 +62,102 @@
                 </div>
             }
             else
-            {
-                <span class="price-tag">$@Model.Price.ToString("F2")</span>
-            }
+            {<span class="price-tag">$@Model.Price.ToString("F2")</span>}
             @if (calculatedPrice.HasValue && calculatedPrice.Value != Model.DiscountedPrice)
             {
-                <div class="mt-1">
-                    <small class="text-success">
-                        <i class="bi bi-stars me-1"></i>VIP Price: $@calculatedPrice.Value.ToString("F2")
-                    </small>
-                </div>
+                <div class="mt-1"><small class="text-success"><i class="bi bi-stars me-1"></i>VIP Price: $@calculatedPrice.Value.ToString("F2")</small></div>
             }
         </div>
 
-        <!-- Promo Message -->
         @if (!string.IsNullOrEmpty(promoMessage))
         {
-            <div class="promo-banner mb-4">
-                <i class="bi bi-megaphone me-2"></i>@promoMessage
-            </div>
+            <div class="promo-banner mb-4"><i class="bi bi-megaphone me-2"></i>@promoMessage</div>
         }
 
-        <!-- Specs -->
         <dl class="row mb-4">
             <dt class="col-sm-4 text-muted">Model</dt>
             <dd class="col-sm-8 fw-semibold">@Model.Model</dd>
-
             <dt class="col-sm-4 text-muted">Condition</dt>
-            <dd class="col-sm-8">
-                <span class="badge @(Model.Condition == PhoneCondition.New ? "bg-success" : Model.ConditionDisplayName == "Refurbished" ? "bg-info" : "bg-secondary")">
-                    @Model.ConditionDisplayName
-                </span>
-            </dd>
-
+            <dd class="col-sm-8"><span class="badge @(Model.Condition == PhoneCondition.New ? "bg-success" : Model.ConditionDisplayName == "Refurbished" ? "bg-info" : "bg-secondary")">@Model.ConditionDisplayName</span></dd>
             <dt class="col-sm-4 text-muted">Category</dt>
             <dd class="col-sm-8">@Model.Category</dd>
-
             <dt class="col-sm-4 text-muted">Availability</dt>
             <dd class="col-sm-8">
                 @if (Model.StockQuantity > 5)
-                {
-                    <span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>In Stock</span>
-                    <small class="text-muted ms-2">(@Model.StockQuantity available)</small>
-                }
+                {<span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>In Stock</span><small class="text-muted ms-2">(@Model.StockQuantity available)</small>}
                 else if (Model.StockQuantity > 0)
-                {
-                    <span class="text-warning fw-bold stock-urgent-pulse"><i class="bi bi-exclamation-circle-fill me-1"></i>Low Stock</span>
-                    <small class="text-muted ms-2">(Only @Model.StockQuantity left!)</small>
-                }
+                {<span class="text-warning fw-bold stock-urgent-pulse"><i class="bi bi-exclamation-circle-fill me-1"></i>Low Stock</span><small class="text-muted ms-2">(Only @Model.StockQuantity left!)</small>}
                 else
-                {
-                    <span class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i>Out of Stock</span>
-                }
+                {<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i>Out of Stock</span>}
             </dd>
         </dl>
 
-        <!-- Add to Cart with Micro-animation -->
-        <div class="d-flex gap-3">
+        <div class="d-flex gap-3 mb-4">
             @if (Model.StockQuantity > 0)
             {
-                <button class="btn btn-primary btn-lg flex-grow-1 btn-add-to-cart" onclick="addToCart(this, '@Model.Name')">
-                    <i class="bi bi-cart-plus me-2"></i>Add to Cart
-                </button>
-                <button class="btn btn-outline-primary btn-lg px-3" title="Add to wishlist">
-                    <i class="bi bi-heart"></i>
-                </button>
+                <form method="post" action="/Cart/Add" class="flex-grow-1">
+                    <input type="hidden" name="id" value="@Model.Id">
+                    <button type="submit" class="btn btn-primary btn-lg w-100 btn-add-to-cart">
+                        <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                    </button>
+                </form>
+                <button class="btn btn-outline-primary btn-lg px-3"><i class="bi bi-heart"></i></button>
             }
             else
-            {
-                <button class="btn btn-secondary btn-lg flex-grow-1" disabled>
-                    <i class="bi bi-x-circle me-2"></i>Out of Stock
-                </button>
-            }
+            {<button class="btn btn-secondary btn-lg flex-grow-1" disabled><i class="bi bi-x-circle me-2"></i>Out of Stock</button>}
         </div>
 
-        <!-- Guarantee Strip -->
-        <div class="guarantee-strip mt-4">
-            <div class="row text-center g-0">
+        <div class="guarantee-strip p-3 rounded">
+            <div class="row text-center small g-0">
                 <div class="col-4"><i class="bi bi-truck me-1"></i>Free Shipping</div>
                 <div class="col-4"><i class="bi bi-shield-check me-1"></i>2-Year Warranty</div>
                 <div class="col-4"><i class="bi bi-arrow-return-left me-1"></i>30-Day Returns</div>
             </div>
         </div>
+
+        <!-- Submit Review -->
+        <div class="mt-4">
+            <h5 class="fw-bold mb-3">Write a Review</h5>
+            <form method="post" action="/Product/SubmitReview">
+                <input type="hidden" name="phoneId" value="@Model.Id">
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Rating</label>
+                    <div class="star-rating">
+                        @for (int i = 5; i >= 1; i--)
+                        {
+                            <input type="radio" id="star@i" name="rating" value="@i" @(i == 5 ? "checked" : "")>
+                            <label for="star@i"><i class="bi bi-star-fill"></i></label>
+                        }
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <textarea name="comment" class="form-control" rows="3" placeholder="Share your thoughts..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-outline-primary">Submit Review</button>
+            </form>
+        </div>
     </div>
 </div>
 
+<style>
+    .star-rating { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 2px; }
+    .star-rating input { display: none; }
+    .star-rating label { cursor: pointer; color: #ddd; font-size: 1.3rem; transition: color 0.2s; }
+    .star-rating label:hover,
+    .star-rating label:hover ~ label,
+    .star-rating input:checked ~ label { color: #f59e0b; }
+</style>
+
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script>
-        function addToCart(btn, productName) {
-            // Success bounce animation
-            btn.classList.add('cart-success');
-            btn.innerHTML = '<i class="bi bi-check-lg me-2"></i>Added!';
-
-            setTimeout(() => {
-                btn.classList.remove('cart-success');
-                btn.innerHTML = '<i class="bi bi-cart-plus me-2"></i>Add to Cart';
-            }, 1500);
-
-            // Show toast
-            const toast = document.createElement('div');
-            toast.className = 'cart-toast';
-            toast.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>${productName} added to cart!`;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.classList.add('show');
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 300);
-                }, 2000);
-            }, 100);
-        }
+        const connection = new signalR.HubConnectionBuilder().withUrl("/hubs/inventory").build();
+        connection.on("ReceivePriceUpdate", data => {
+            if (data.productName === "@Model.Name") {
+                const tag = document.querySelector('.price-tag');
+                if (tag) tag.textContent = '$' + data.newPrice.toFixed(2);
+            }
+        });
+        connection.start().catch(err => console.log("SignalR:", err));
     </script>
 }

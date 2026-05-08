@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Website_Selling_Phones.Data;
@@ -5,6 +6,7 @@ using Website_Selling_Phones.Models;
 
 namespace Website_Selling_Phones.Pages.Admin;
 
+[Authorize(Roles = "Admin")]
 public class CreateModel : PageModel
 {
     private readonly ApplicationDbContext _context;

@@ -1,0 +1,62 @@
+@model List<Website_Selling_Phones.Models.Order>
+@{
+    ViewData["Title"] = "Order History";
+    Layout = "_ItemLayout";
+}
+
+<div class="container py-4">
+    <h2 class="fw-bold mb-4"><i class="bi bi-clock-history me-2"></i>Order History</h2>
+
+    @if (Model.Any())
+    {
+        @foreach (var order in Model)
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Order #@order.Id</strong>
+                        <small class="text-muted ms-3">@order.OrderDate.ToString("MMM dd, yyyy")</small>
+                    </div>
+                    <span class="badge @(order.Status == OrderStatus.Delivered ? "bg-success" : order.Status == OrderStatus.Cancelled ? "bg-danger" : "bg-info")">
+                        @order.Status
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in order.OrderItems)
+                                {
+                                    <tr>
+                                        <td>@item.PhoneName</td>
+                                        <td>$@item.Price.ToString("F2")</td>
+                                        <td>@item.Quantity</td>
+                                        <td>$@((item.Price * item.Quantity).ToString("F2"))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">Total:</td>
+                                    <td class="fw-bold text-primary">$@order.TotalAmount.ToString("F2")</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="bi bi-receipt"></i>
+            <h4>No orders yet</h4>
+            <p>Start shopping to see your orders here.</p>
+            <a href="/Product" class="btn btn-primary mt-2">Shop Now</a>
+        </div>
+    }
+</div>

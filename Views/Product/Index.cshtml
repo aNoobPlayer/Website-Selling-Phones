@@ -2,88 +2,71 @@
 @{
     ViewData["Title"] = "Shop";
     Layout = "_ShopLayout";
-    var lowStockAlerts = ViewData["LowStockAlerts"] as List<Website_Selling_Phones.Models.Phone>;
+    var totalPages = (int)(ViewData["TotalPages"] ?? 1);
+    var currentPage = (int)(ViewData["CurrentPage"] ?? 1);
+    var totalItems = (int)(ViewData["TotalItems"] ?? 0);
+    var search = ViewData["Search"] as string ?? "";
+    var currentBrand = ViewData["CurrentBrand"] as string ?? "";
+    var currentCategory = ViewData["CurrentCategory"] as string ?? "";
+    var currentCondition = ViewData["CurrentCondition"] as string ?? "";
+    var currentSort = ViewData["CurrentSort"] as string ?? "";
 }
 
-<!-- Page Header - Glassmorphism -->
 <header class="page-header">
     <div class="container">
-        <h2 class="fw-bold mb-1">@ViewData["Title"]</h2>
-        <p class="opacity-75 mb-0">Browse our complete collection</p>
+        <h2 class="fw-bold mb-1">Shop</h2>
+        <p class="opacity-75 mb-0">@totalItems phones available</p>
     </div>
 </header>
 
 <div class="container py-4">
     <div class="row">
-        <!-- Sidebar - Category Menu Component -->
         <aside class="col-lg-3 mb-4">
-            @await Component.InvokeAsync("CategoryMenu", new { currentCategory = ViewData["CurrentCategory"] as string })
-        </aside>
-
-        <!-- Main Product Area -->
-        <main class="col-lg-9">
-            <!-- Toolbar: Sort + Active Filters -->
-            <div class="toolbar d-flex flex-wrap justify-content-between align-items-center mb-3 p-2">
-                <div class="active-filters d-flex flex-wrap gap-1">
-                    @if (!string.IsNullOrEmpty(ViewData["CurrentBrand"] as string))
-                    {
-                        <span class="filter-tag">
-                            @ViewData["CurrentBrand"]
-                            <a href="@Url.Action("Index", new { category = ViewData["CurrentCategory"], minPrice = ViewData["MinPrice"], maxPrice = ViewData["MaxPrice"], condition = ViewData["CurrentCondition"], sort = ViewData["CurrentSort"] })" class="ms-1 text-decoration-none">&times;</a>
-                        </span>
-                    }
-                    @if (!string.IsNullOrEmpty(ViewData["CurrentCategory"] as string))
-                    {
-                        <span class="filter-tag">
-                            @ViewData["CurrentCategory"]
-                            <a href="@Url.Action("Index", new { brand = ViewData["CurrentBrand"], minPrice = ViewData["MinPrice"], maxPrice = ViewData["MaxPrice"], condition = ViewData["CurrentCondition"], sort = ViewData["CurrentSort"] })" class="ms-1 text-decoration-none">&times;</a>
-                        </span>
-                    }
-                    @if (!string.IsNullOrEmpty(ViewData["CurrentCondition"] as string))
-                    {
-                        <span class="filter-tag">
-                            @ViewData["CurrentCondition"]
-                            <a href="@Url.Action("Index", new { brand = ViewData["CurrentBrand"], category = ViewData["CurrentCategory"], minPrice = ViewData["MinPrice"], maxPrice = ViewData["MaxPrice"], sort = ViewData["CurrentSort"] })" class="ms-1 text-decoration-none">&times;</a>
-                        </span>
-                    }
-                </div>
-                <div class="sort-group">
-                    <select class="form-select form-select-sm" onchange="window.location.href='?brand=@ViewData["CurrentBrand"]&category=@ViewData["CurrentCategory"]&condition=@ViewData["CurrentCondition"]&sort=' + this.value">
-                        <option value="featured">Featured</option>
-                        <option value="price_asc">Price: Low to High</option>
-                        <option value="price_desc">Price: High to Low</option>
-                        <option value="name_asc">Name: A-Z</option>
-                        <option value="newest">Newest</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Low Stock Alerts (SignalR ready) -->
-            @if (lowStockAlerts != null && lowStockAlerts.Any())
-            {
-                <div class="alert alert-warning d-flex align-items-center" role="alert" id="lowStockAlert">
-                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
-                    <div>
-                        <strong>Low Stock Alert:</strong>
-                        @string.Join(", ", lowStockAlerts.Select(p => $"{p.Name} ({p.StockQuantity} left)"))
+            @await Component.InvokeAsync("CategoryMenu", new { currentCategory = currentCategory })
+            <div class="sidebar-filter mt-3">
+                <div class="sidebar-section p-3">
+                    <h5 class="fw-bold small text-uppercase text-muted mb-2">Condition</h5>
+                    <div class="d-flex flex-wrap gap-1">
+                        <a href="?condition=New" class="btn btn-sm @(currentCondition == "New" ? "btn-primary" : "btn-outline-secondary")">New</a>
+                        <a href="?condition=Refurbished" class="btn btn-sm @(currentCondition == "Refurbished" ? "btn-primary" : "btn-outline-secondary")">Refurbished</a>
+                        <a href="?condition=Used" class="btn btn-sm @(currentCondition == "Used" ? "btn-primary" : "btn-outline-secondary")">Used</a>
                     </div>
                 </div>
-            }
+            </div>
+        </aside>
 
-            <!-- Product Grid using CSS Grid -->
+        <main class="col-lg-9">
+            <div class="toolbar d-flex flex-wrap justify-content-between align-items-center mb-3 p-3">
+                <form method="get" class="d-flex gap-2 flex-grow-1 me-3">
+                    @if (!string.IsNullOrEmpty(currentBrand))
+                    {<input type="hidden" name="brand" value="@currentBrand">}
+                    @if (!string.IsNullOrEmpty(currentCategory))
+                    {<input type="hidden" name="category" value="@currentCategory">}
+                    @if (!string.IsNullOrEmpty(currentCondition))
+                    {<input type="hidden" name="condition" value="@currentCondition">}
+                    <div class="input-group">
+                        <input type="text" name="search" value="@search" class="form-control" placeholder="Search phones...">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+                    </div>
+                </form>
+                <select class="form-select form-select-sm w-auto" onchange="window.location.href='?brand=@currentBrand&category=@currentCategory&condition=@currentCondition&search=@search&sort=' + this.value">
+                    <option value="featured">Featured</option>
+                    <option value="price_asc">Price: Low-High</option>
+                    <option value="price_desc">Price: High-Low</option>
+                    <option value="name_asc">Name: A-Z</option>
+                    <option value="newest">Newest</option>
+                </select>
+            </div>
+
             <div class="product-grid">
                 @foreach (var phone in Model)
                 {
                     <article class="product-card-v2 skeleton-ready" data-animate="fadeInUp">
                         <figure class="product-image-container">
                             <img src="@phone.ImageUrl" alt="@phone.Name" loading="lazy">
-                            <figcaption class="condition-badge @phone.ConditionBadgeClass">
-                                @phone.ConditionDisplayName
-                            </figcaption>
+                            <figcaption class="condition-badge @phone.ConditionBadgeClass">@phone.ConditionDisplayName</figcaption>
                             @if (phone.DiscountPercentage > 0)
-                            {
-                                <span class="discount-badge">-@phone.DiscountPercentage%</span>
-                            }
+                            {<span class="discount-badge">-@phone.DiscountPercentage%</span>}
                         </figure>
                         <div class="product-info">
                             <span class="brand-label">@phone.Brand</span>
@@ -95,45 +78,55 @@
                                     <span class="current-price">$@phone.DiscountedPrice.ToString("F0")</span>
                                 }
                                 else
-                                {
-                                    <span class="current-price">$@phone.Price.ToString("F0")</span>
-                                }
+                                {<span class="current-price">$@phone.Price.ToString("F0")</span>}
                             </div>
                             @if (phone.StockQuantity <= 3 && phone.StockQuantity > 0)
-                            {
-                                <small class="text-warning stock-urgent">Only @phone.StockQuantity left!</small>
-                            }
+                            {<small class="text-warning stock-urgent">Only @phone.StockQuantity left!</small>}
                             else if (phone.StockQuantity == 0)
-                            {
-                                <small class="text-danger">Out of stock</small>
-                            }
+                            {<small class="text-danger">Out of stock</small>}
                         </div>
-                        <footer class="product-actions">
-                            <a href="/Product/Details/@phone.Id" class="btn btn-outline-primary btn-sm w-100">View Details</a>
+                        <footer class="product-actions d-flex gap-1">
+                            <a href="/Product/Details/@phone.Id" class="btn btn-outline-primary btn-sm flex-grow-1">Details</a>
+                            <form method="post" action="/Cart/AddAjax" class="flex-grow-1 ajax-cart-form">
+                                <input type="hidden" name="id" value="@phone.Id">
+                                <button type="submit" class="btn btn-primary btn-sm w-100">Add to Cart</button>
+                            </form>
                         </footer>
                     </article>
                 }
             </div>
 
-            <!-- Skeleton Loading Placeholders -->
-            <div class="product-grid skeleton-grid" style="display: none;" id="skeletonGrid">
-                @for (int i = 0; i < 6; i++)
-                {
-                    <div class="product-card-v2">
-                        <div class="skeleton skeleton-img"></div>
-                        <div class="skeleton skeleton-text skeleton-text-short"></div>
-                        <div class="skeleton skeleton-text"></div>
-                        <div class="skeleton skeleton-text skeleton-text-price"></div>
-                    </div>
-                }
-            </div>
+            @if (totalPages > 1)
+            {
+                var prevPage = currentPage - 1;
+                var nextPage = currentPage + 1;
+                var baseUrl = "?brand=" + currentBrand + "&category=" + currentCategory + "&condition=" + currentCondition + "&sort=" + currentSort + "&search=" + search + "&page=";
+
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" href="@(baseUrl)@prevPage">&laquo;</a>
+                        </li>
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                <a class="page-link" href="@(baseUrl)@i">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="@(baseUrl)@nextPage">&raquo;</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
 
             @if (!Model.Any())
             {
                 <div class="empty-state">
                     <i class="bi bi-search"></i>
                     <h4>No phones found</h4>
-                    <p>Try adjusting your filters or <a href="/Product">view all products</a></p>
+                    <p>Try adjusting your filters.</p>
+                    <a href="/Product" class="btn btn-primary">View All</a>
                 </div>
             }
         </main>
@@ -143,36 +136,27 @@
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script>
-        // SignalR real-time inventory
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/hubs/inventory")
-            .build();
-
-        connection.on("ReceiveLowStockAlert", (data) => {
-            const alert = document.getElementById("lowStockAlert");
-            if (alert) {
-                alert.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
-                    <div><strong>Low Stock Alert:</strong> ${data.productName} (${data.stockQuantity} left)</div>`;
-                alert.style.display = "flex";
-            }
+        const connection = new signalR.HubConnectionBuilder().withUrl("/hubs/inventory").build();
+        connection.on("ReceiveLowStockAlert", data => {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-warning alert-dismissible fade show';
+            alertDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>' + data.message +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+            document.querySelector('main')?.prepend(alertDiv);
         });
+        connection.start().catch(err => console.log("SignalR:", err));
 
-        connection.on("ReceivePriceUpdate", (data) => {
-            console.log("Price update:", data.productName, data.newPrice);
-        });
-
-        connection.on("ReceiveNewArrival", (data) => {
-            console.log("New arrival:", data.productName);
-        });
-
-        connection.start().catch(err => console.log("SignalR not connected (expected in dev):", err));
-
-        // Skeleton loading demo
-        document.addEventListener("DOMContentLoaded", () => {
-            const grid = document.querySelector(".product-grid");
-            const skeleton = document.getElementById("skeletonGrid");
-            if (grid) grid.style.display = "grid";
-            if (skeleton) skeleton.style.display = "none";
+        document.querySelectorAll('.ajax-cart-form').forEach(form => {
+            form.addEventListener('submit', async e => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const response = await fetch('/Cart/AddAjax', { method: 'POST', body: formData });
+                const data = await response.json();
+                const btn = form.querySelector('button');
+                btn.classList.add('cart-success');
+                btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+                setTimeout(() => { btn.classList.remove('cart-success'); btn.innerHTML = 'Add to Cart'; }, 1000);
+            });
         });
     </script>
 }

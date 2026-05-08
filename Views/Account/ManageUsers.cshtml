@@ -1,0 +1,58 @@
+@model List<Website_Selling_Phones.Models.ApplicationUser>
+@{
+    ViewData["Title"] = "Manage Users";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0"><i class="bi bi-people-fill me-2"></i>User Management</h3>
+        <span class="badge bg-primary">@Model.Count users</span>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@user.FullName</td>
+                            <td>@user.Email</td>
+                            <td>
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <span class="badge bg-danger">Admin</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info">Customer</span>
+                                }
+                            </td>
+                            <td class="text-muted small">@user.CreatedAt.ToString("MMM dd, yyyy")</td>
+                            <td>
+                                @if (User.Identity?.Name != user.Email)
+                                {
+                                    <form method="post" asp-action="ToggleAdmin" asp-route-userId="@user.Id">
+                                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                                            Toggle Admin
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
