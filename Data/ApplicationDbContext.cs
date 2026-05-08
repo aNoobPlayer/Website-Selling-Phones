@@ -16,6 +16,11 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<Product>(entity =>
+        {
+            entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
+        });
+
         // Seed some sample phone data
         modelBuilder.Entity<Product>().HasData(
             new Product
