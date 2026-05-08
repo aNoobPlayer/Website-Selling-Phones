@@ -2,96 +2,100 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Home";
+    Layout = "_ShopLayout";
 }
 
 <!-- Hero Section -->
-<div class="hero-section text-center py-5 mb-5">
-    <div class="container">
-        <h1 class="display-4 fw-bold mb-3">Welcome to PhoneStore</h1>
+<section class="hero-section">
+    <div class="container text-center text-white">
+        <h1 class="mb-3">Your Next Phone<br>Awaits</h1>
         <p class="lead mb-4">Discover the latest smartphones at unbeatable prices</p>
-        <a href="/Products" class="btn btn-primary btn-lg">Shop Now</a>
+        <a href="/Products" class="btn btn-lg">
+            <i class="bi bi-arrow-right me-2"></i>Shop Now
+        </a>
     </div>
-</div>
+</section>
+
+<!-- Features -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <i class="bi bi-truck display-5 d-block mb-3"></i>
+                    <h5>Free Shipping</h5>
+                    <p class="text-muted small mb-0">Free delivery on all orders over $500</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <i class="bi bi-shield-check display-5 d-block mb-3"></i>
+                    <h5>2-Year Warranty</h5>
+                    <p class="text-muted small mb-0">All phones come with full warranty</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <i class="bi bi-arrow-return-left display-5 d-block mb-3"></i>
+                    <h5>30-Day Returns</h5>
+                    <p class="text-muted small mb-0">Easy returns, no questions asked</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- Featured Products -->
-<div class="container mb-5">
-    <h2 class="text-center mb-4">Featured Phones</h2>
-    <div class="row">
-        @foreach (var product in Model.FeaturedProducts)
-        {
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" style="height: 300px; object-fit: cover;">
-                    <div class="card-body">
-                        <h5 class="card-title">@product.Name</h5>
-                        <p class="card-text text-muted">@product.Brand</p>
-                        <p class="card-text">@(product.Description?.Length > 100 ? product.Description.Substring(0, 100) + "..." : product.Description)</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="h5 text-primary mb-0">$@product.Price.ToString("F2")</span>
-                            <a href="/Products/Details?id=@product.Id" class="btn btn-outline-primary">View Details</a>
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1">Featured Phones</h2>
+                <p class="text-muted mb-0">Hand-picked just for you</p>
+            </div>
+            <a href="/Products" class="btn btn-outline-primary">View All <i class="bi bi-arrow-right ms-1"></i></a>
+        </div>
+        <div class="row g-4">
+            @foreach (var product in Model.FeaturedProducts)
+            {
+                <div class="col-md-4 animate-in" style="animation-delay: @(Model.FeaturedProducts.IndexOf(product) * 0.1)s">
+                    <div class="card product-card h-100">
+                        <span class="badge bg-warning">Featured</span>
+                        <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name">
+                        <div class="card-body pb-2">
+                            <p class="text-muted small mb-1">@product.Brand</p>
+                            <h5 class="card-title fw-bold">@product.Name</h5>
+                            <p class="card-text text-muted small">@(product.Description?.Length > 80 ? product.Description.Substring(0, 80) + "..." : product.Description)</p>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between align-items-center">
+                            <span class="h5 text-primary mb-0 fw-bold">$@product.Price.ToString("F0")</span>
+                            <a href="/Products/Details?id=@product.Id" class="btn btn-outline-primary btn-sm">Details</a>
                         </div>
                     </div>
                 </div>
-            </div>
-        }
+            }
+        </div>
     </div>
-    <div class="text-center mt-4">
-        <a href="/Products" class="btn btn-primary btn-lg">View All Products</a>
-    </div>
-</div>
+</section>
 
-<!-- Features Section -->
-<div class="bg-light py-5 mb-5">
+<!-- Brands -->
+<section class="py-5">
     <div class="container">
-        <div class="row text-center">
-            <div class="col-md-4 mb-3">
-                <div class="feature-icon mb-3">
-                    <i class="bi bi-truck fs-1 text-primary"></i>
-                </div>
-                <h4>Free Shipping</h4>
-                <p class="text-muted">Free shipping on all orders over $500</p>
+        <h2 class="fw-bold mb-1 text-center">Shop by Brand</h2>
+        <p class="text-muted text-center mb-4">Choose from the world's top manufacturers</p>
+        <div class="row g-3">
+            <div class="col-6 col-md-3">
+                <div class="brand-card text-center">🍎 Apple</div>
             </div>
-            <div class="col-md-4 mb-3">
-                <div class="feature-icon mb-3">
-                    <i class="bi bi-shield-check fs-1 text-primary"></i>
-                </div>
-                <h4>2-Year Warranty</h4>
-                <p class="text-muted">All phones come with warranty</p>
+            <div class="col-6 col-md-3">
+                <div class="brand-card text-center">📱 Samsung</div>
             </div>
-            <div class="col-md-4 mb-3">
-                <div class="feature-icon mb-3">
-                    <i class="bi bi-arrow-return-left fs-1 text-primary"></i>
-                </div>
-                <h4>30-Day Returns</h4>
-                <p class="text-muted">Easy returns within 30 days</p>
+            <div class="col-6 col-md-3">
+                <div class="brand-card text-center">📷 Google</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="brand-card text-center">⚡ OnePlus</div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- Brands Section -->
-<div class="container mb-5">
-    <h2 class="text-center mb-4">Top Brands</h2>
-    <div class="row text-center">
-        <div class="col-6 col-md-3 mb-3">
-            <div class="p-3 border rounded">
-                <h5>Apple</h5>
-            </div>
-        </div>
-        <div class="col-6 col-md-3 mb-3">
-            <div class="p-3 border rounded">
-                <h5>Samsung</h5>
-            </div>
-        </div>
-        <div class="col-6 col-md-3 mb-3">
-            <div class="p-3 border rounded">
-                <h5>Google</h5>
-            </div>
-        </div>
-        <div class="col-6 col-md-3 mb-3">
-            <div class="p-3 border rounded">
-                <h5>OnePlus</h5>
-            </div>
-        </div>
-    </div>
-</div>
+</section>

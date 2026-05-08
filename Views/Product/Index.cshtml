@@ -1,0 +1,178 @@
+@model List<Website_Selling_Phones.Models.Phone>
+@{
+    ViewData["Title"] = "Shop";
+    Layout = "_ShopLayout";
+    var lowStockAlerts = ViewData["LowStockAlerts"] as List<Website_Selling_Phones.Models.Phone>;
+}
+
+<!-- Page Header - Glassmorphism -->
+<header class="page-header">
+    <div class="container">
+        <h2 class="fw-bold mb-1">@ViewData["Title"]</h2>
+        <p class="opacity-75 mb-0">Browse our complete collection</p>
+    </div>
+</header>
+
+<div class="container py-4">
+    <div class="row">
+        <!-- Sidebar - Category Menu Component -->
+        <aside class="col-lg-3 mb-4">
+            @await Component.InvokeAsync("CategoryMenu", new { currentCategory = ViewData["CurrentCategory"] as string })
+        </aside>
+
+        <!-- Main Product Area -->
+        <main class="col-lg-9">
+            <!-- Toolbar: Sort + Active Filters -->
+            <div class="toolbar d-flex flex-wrap justify-content-between align-items-center mb-3 p-2">
+                <div class="active-filters d-flex flex-wrap gap-1">
+                    @if (!string.IsNullOrEmpty(ViewData["CurrentBrand"] as string))
+                    {
+                        <span class="filter-tag">
+                            @ViewData["CurrentBrand"]
+                            <a href="@Url.Action("Index", new { category = ViewData["CurrentCategory"], minPrice = ViewData["MinPrice"], maxPrice = ViewData["MaxPrice"], condition = ViewData["CurrentCondition"], sort = ViewData["CurrentSort"] })" class="ms-1 text-decoration-none">&times;</a>
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(ViewData["CurrentCategory"] as string))
+                    {
+                        <span class="filter-tag">
+                            @ViewData["CurrentCategory"]
+                            <a href="@Url.Action("Index", new { brand = ViewData["CurrentBrand"], minPrice = ViewData["MinPrice"], maxPrice = ViewData["MaxPrice"], condition = ViewData["CurrentCondition"], sort = ViewData["CurrentSort"] })" class="ms-1 text-decoration-none">&times;</a>
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(ViewData["CurrentCondition"] as string))
+                    {
+                        <span class="filter-tag">
+                            @ViewData["CurrentCondition"]
+                            <a href="@Url.Action("Index", new { brand = ViewData["CurrentBrand"], category = ViewData["CurrentCategory"], minPrice = ViewData["MinPrice"], maxPrice = ViewData["MaxPrice"], sort = ViewData["CurrentSort"] })" class="ms-1 text-decoration-none">&times;</a>
+                        </span>
+                    }
+                </div>
+                <div class="sort-group">
+                    <select class="form-select form-select-sm" onchange="window.location.href='?brand=@ViewData["CurrentBrand"]&category=@ViewData["CurrentCategory"]&condition=@ViewData["CurrentCondition"]&sort=' + this.value">
+                        <option value="featured">Featured</option>
+                        <option value="price_asc">Price: Low to High</option>
+                        <option value="price_desc">Price: High to Low</option>
+                        <option value="name_asc">Name: A-Z</option>
+                        <option value="newest">Newest</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Low Stock Alerts (SignalR ready) -->
+            @if (lowStockAlerts != null && lowStockAlerts.Any())
+            {
+                <div class="alert alert-warning d-flex align-items-center" role="alert" id="lowStockAlert">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                    <div>
+                        <strong>Low Stock Alert:</strong>
+                        @string.Join(", ", lowStockAlerts.Select(p => $"{p.Name} ({p.StockQuantity} left)"))
+                    </div>
+                </div>
+            }
+
+            <!-- Product Grid using CSS Grid -->
+            <div class="product-grid">
+                @foreach (var phone in Model)
+                {
+                    <article class="product-card-v2 skeleton-ready" data-animate="fadeInUp">
+                        <figure class="product-image-container">
+                            <img src="@phone.ImageUrl" alt="@phone.Name" loading="lazy">
+                            <figcaption class="condition-badge @phone.ConditionBadgeClass">
+                                @phone.ConditionDisplayName
+                            </figcaption>
+                            @if (phone.DiscountPercentage > 0)
+                            {
+                                <span class="discount-badge">-@phone.DiscountPercentage%</span>
+                            }
+                        </figure>
+                        <div class="product-info">
+                            <span class="brand-label">@phone.Brand</span>
+                            <h3>@phone.Name</h3>
+                            <div class="price-row">
+                                @if (phone.DiscountPercentage > 0)
+                                {
+                                    <span class="original-price">$@phone.Price.ToString("F0")</span>
+                                    <span class="current-price">$@phone.DiscountedPrice.ToString("F0")</span>
+                                }
+                                else
+                                {
+                                    <span class="current-price">$@phone.Price.ToString("F0")</span>
+                                }
+                            </div>
+                            @if (phone.StockQuantity <= 3 && phone.StockQuantity > 0)
+                            {
+                                <small class="text-warning stock-urgent">Only @phone.StockQuantity left!</small>
+                            }
+                            else if (phone.StockQuantity == 0)
+                            {
+                                <small class="text-danger">Out of stock</small>
+                            }
+                        </div>
+                        <footer class="product-actions">
+                            <a href="/Product/Details/@phone.Id" class="btn btn-outline-primary btn-sm w-100">View Details</a>
+                        </footer>
+                    </article>
+                }
+            </div>
+
+            <!-- Skeleton Loading Placeholders -->
+            <div class="product-grid skeleton-grid" style="display: none;" id="skeletonGrid">
+                @for (int i = 0; i < 6; i++)
+                {
+                    <div class="product-card-v2">
+                        <div class="skeleton skeleton-img"></div>
+                        <div class="skeleton skeleton-text skeleton-text-short"></div>
+                        <div class="skeleton skeleton-text"></div>
+                        <div class="skeleton skeleton-text skeleton-text-price"></div>
+                    </div>
+                }
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="empty-state">
+                    <i class="bi bi-search"></i>
+                    <h4>No phones found</h4>
+                    <p>Try adjusting your filters or <a href="/Product">view all products</a></p>
+                </div>
+            }
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        // SignalR real-time inventory
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/inventory")
+            .build();
+
+        connection.on("ReceiveLowStockAlert", (data) => {
+            const alert = document.getElementById("lowStockAlert");
+            if (alert) {
+                alert.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                    <div><strong>Low Stock Alert:</strong> ${data.productName} (${data.stockQuantity} left)</div>`;
+                alert.style.display = "flex";
+            }
+        });
+
+        connection.on("ReceivePriceUpdate", (data) => {
+            console.log("Price update:", data.productName, data.newPrice);
+        });
+
+        connection.on("ReceiveNewArrival", (data) => {
+            console.log("New arrival:", data.productName);
+        });
+
+        connection.start().catch(err => console.log("SignalR not connected (expected in dev):", err));
+
+        // Skeleton loading demo
+        document.addEventListener("DOMContentLoaded", () => {
+            const grid = document.querySelector(".product-grid");
+            const skeleton = document.getElementById("skeletonGrid");
+            if (grid) grid.style.display = "grid";
+            if (skeleton) skeleton.style.display = "none";
+        });
+    </script>
+}

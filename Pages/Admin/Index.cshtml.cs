@@ -28,6 +28,9 @@ public class IndexModel : PageModel
         InStockProducts = Products.Count(p => p.StockQuantity > 0);
         FeaturedProducts = Products.Count(p => p.IsFeatured);
         TotalValue = Products.Sum(p => p.Price * p.StockQuantity);
+
+        ViewData["TotalProducts"] = TotalProducts;
+        ViewData["FeaturedProducts"] = FeaturedProducts;
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)

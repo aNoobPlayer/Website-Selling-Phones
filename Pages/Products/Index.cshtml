@@ -1,44 +1,68 @@
 @page
 @model Website_Selling_Phones.Pages.Products.IndexModel
 @{
-    ViewData["Title"] = "All Phones";
+    ViewData["Title"] = "Shop";
+    Layout = "_ShopLayout";
 }
 
-<div class="container py-5">
-    <h1 class="text-center mb-5">All Phones</h1>
-    
-    <!-- Search and Filter -->
+<!-- Page Header -->
+<section class="bg-light py-4 mb-4">
+    <div class="container">
+        <h2 class="fw-bold mb-1">All Phones</h2>
+        <p class="text-muted mb-0">Browse our complete collection</p>
+    </div>
+</section>
+
+<div class="container pb-5">
+    <!-- Filters -->
     <div class="row mb-4">
-        <div class="col-md-6 mx-auto">
-            <form method="get" class="d-flex">
-                <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control me-2" placeholder="Search phones...">
-                <button type="submit" class="btn btn-primary">Search</button>
+        <div class="col-lg-6 mx-auto">
+            <form method="get" class="d-flex gap-2">
+                <div class="input-group shadow-sm rounded">
+                    <span class="input-group-text bg-white border-end-0 rounded-start">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control border-start-0" placeholder="Search by name, brand, or keyword...">
+                </div>
+                <button type="submit" class="btn btn-primary px-4">Search</button>
+                @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                {
+                    <a href="/Products" class="btn btn-outline-secondary">Clear</a>
+                }
             </form>
         </div>
     </div>
 
-    <!-- Products Grid -->
-    <div class="row">
+    @if (!string.IsNullOrEmpty(Model.SearchTerm))
+    {
+        <div class="mb-3">
+            <small class="text-muted">Results for "<strong>@Model.SearchTerm</strong>" — @Model.Products.Count phone(s) found</small>
+        </div>
+    }
+
+    <!-- Product Grid -->
+    <div class="row g-4">
         @foreach (var product in Model.Products)
         {
-            <div class="col-md-4 col-lg-3 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" style="height: 250px; object-fit: cover;">
-                    <div class="card-body">
-                        <h6 class="card-title">@product.Name</h6>
-                        <p class="card-text text-muted small">@product.Brand</p>
-                        <p class="card-text fw-bold text-primary">$@product.Price.ToString("F2")</p>
-                        @if (product.StockQuantity > 0)
-                        {
-                            <span class="badge bg-success">In Stock</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-danger">Out of Stock</span>
-                        }
+            <div class="col-md-4 col-lg-3 animate-in">
+                <div class="card product-card h-100">
+                    @if (product.StockQuantity > 0)
+                    {
+                        <span class="badge bg-success">In Stock</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Sold Out</span>
+                    }
+                    <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" style="height: 220px;">
+                    <div class="card-body pb-2">
+                        <p class="text-muted small mb-1">@product.Brand</p>
+                        <h6 class="card-title fw-bold">@product.Name</h6>
+                        <p class="fw-bold text-primary mb-0 fs-5">$@product.Price.ToString("F0")</p>
                     </div>
-                    <div class="card-footer bg-white border-0">
-                        <a href="/Products/Details?id=@product.Id" class="btn btn-primary w-100">View Details</a>
+                    <div class="card-footer d-flex gap-2">
+                        <a href="/Products/Details?id=@product.Id" class="btn btn-outline-primary btn-sm w-50">View</a>
+                        <button class="btn btn-primary btn-sm w-50" onclick="alert('Added to cart!')">Add to Cart</button>
                     </div>
                 </div>
             </div>
@@ -47,9 +71,10 @@
 
     @if (!Model.Products.Any())
     {
-        <div class="text-center py-5">
-            <h4 class="text-muted">No products found</h4>
-            <a href="/Products" class="btn btn-outline-primary mt-3">View All Products</a>
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h4 class="text-muted">No phones found</h4>
+            <p>Try adjusting your search or <a href="/Products">view all products</a></p>
         </div>
     }
 </div>

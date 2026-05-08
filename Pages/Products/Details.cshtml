@@ -2,85 +2,88 @@
 @model Website_Selling_Phones.Pages.Products.DetailsModel
 @{
     ViewData["Title"] = Model.Product?.Name ?? "Product Details";
+    Layout = "_ItemLayout";
 }
 
-<div class="container py-5">
-    @if (Model.Product != null)
-    {
-        <div class="row">
-            <!-- Product Image -->
-            <div class="col-md-6 mb-4">
-                <img src="@Model.Product.ImageUrl" class="img-fluid rounded shadow" alt="@Model.Product.Name" style="width: 100%; max-height: 500px; object-fit: cover;">
+@if (Model.Product != null)
+{
+    <div class="row g-5">
+        <!-- Product Image -->
+        <div class="col-lg-6">
+            <div class="product-gallery">
+                <img src="@Model.Product.ImageUrl" class="img-fluid w-100" alt="@Model.Product.Name" style="min-height: 400px; object-fit: cover;">
             </div>
+        </div>
 
-            <!-- Product Info -->
-            <div class="col-md-6">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/">Home</a></li>
-                        <li class="breadcrumb-item"><a href="/Products">Products</a></li>
-                        <li class="breadcrumb-item active">@Model.Product.Name</li>
-                    </ol>
-                </nav>
+        <!-- Product Info -->
+        <div class="col-lg-6">
+            <p class="text-muted text-uppercase small fw-bold mb-2">@Model.Product.Brand</p>
+            <h1 class="fw-bold mb-3">@Model.Product.Name</h1>
+            <p class="text-muted mb-4">@Model.Product.Description</p>
 
-                <h1 class="mb-2">@Model.Product.Name</h1>
-                <p class="text-muted mb-3">@Model.Product.Brand</p>
+            <div class="price-tag mb-4">$@Model.Product.Price.ToString("F2")</div>
 
-                <h3 class="text-primary mb-4">$@Model.Product.Price.ToString("F2")</h3>
-
-                <div class="mb-4">
-                    <h5>Description</h5>
-                    <p>@Model.Product.Description</p>
+            <div class="row mb-4">
+                <div class="col-6">
+                    <small class="text-muted d-block">Model</small>
+                    <strong>@Model.Product.Model</strong>
                 </div>
-
-                <div class="row mb-4">
-                    <div class="col-6">
-                        <strong>Model:</strong> @Model.Product.Model
-                    </div>
-                    <div class="col-6">
-                        <strong>Stock:</strong> 
-                        @if (Model.Product.StockQuantity > 0)
-                        {
-                            <span class="text-success">@Model.Product.StockQuantity available</span>
-                        }
-                        else
-                        {
-                            <span class="text-danger">Out of stock</span>
-                        }
-                    </div>
-                </div>
-
-                <div class="d-flex gap-2">
+                <div class="col-6">
+                    <small class="text-muted d-block">Availability</small>
                     @if (Model.Product.StockQuantity > 0)
                     {
-                        <button class="btn btn-primary btn-lg" onclick="alert('Added to cart!')">
-                            <i class="bi bi-cart-plus"></i> Add to Cart
-                        </button>
+                        <span class="badge bg-success stock-badge">In Stock — @Model.Product.StockQuantity units</span>
                     }
                     else
                     {
-                        <button class="btn btn-secondary btn-lg" disabled>
-                            Out of Stock
-                        </button>
+                        <span class="badge bg-danger stock-badge">Out of Stock</span>
                     }
-                    <a href="/Products" class="btn btn-outline-secondary btn-lg">Back to Products</a>
                 </div>
+            </div>
 
-                <div class="mt-4">
-                    <small class="text-muted">
-                        <i class="bi bi-truck"></i> Free shipping on orders over $500<br>
-                        <i class="bi bi-shield-check"></i> 2-year warranty included<br>
-                        <i class="bi bi-arrow-return-left"></i> 30-day return policy
-                    </small>
+            <div class="d-flex gap-3 mb-4">
+                @if (Model.Product.StockQuantity > 0)
+                {
+                    <button class="btn btn-primary btn-lg flex-grow-1" onclick="alert('Added to cart!')">
+                        <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                    </button>
+                    <button class="btn btn-outline-primary btn-lg px-3" title="Add to wishlist">
+                        <i class="bi bi-heart"></i>
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-secondary btn-lg flex-grow-1" disabled>
+                        <i class="bi bi-x-circle me-2"></i>Out of Stock
+                    </button>
+                }
+            </div>
+
+            <div class="border rounded p-3 bg-light">
+                <div class="row text-center small">
+                    <div class="col-4 border-end">
+                        <i class="bi bi-truck text-primary d-block fs-4 mb-1"></i>
+                        Free Shipping
+                    </div>
+                    <div class="col-4 border-end">
+                        <i class="bi bi-shield-check text-primary d-block fs-4 mb-1"></i>
+                        2-Year Warranty
+                    </div>
+                    <div class="col-4">
+                        <i class="bi bi-arrow-return-left text-primary d-block fs-4 mb-1"></i>
+                        30-Day Returns
+                    </div>
                 </div>
             </div>
         </div>
-    }
-    else
-    {
-        <div class="text-center py-5">
-            <h2>Product not found</h2>
-            <a href="/Products" class="btn btn-primary mt-3">Back to Products</a>
-        </div>
-    }
-</div>
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <i class="bi bi-emoji-frown"></i>
+        <h4>Product Not Found</h4>
+        <p>The product you're looking for doesn't exist or has been removed.</p>
+        <a href="/Products" class="btn btn-primary mt-2">Browse Products</a>
+    </div>
+}
