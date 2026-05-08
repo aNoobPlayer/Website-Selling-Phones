@@ -59,6 +59,10 @@ public class Phone
     [DataType(DataType.MultilineText)]
     public string? Description { get; set; }
 
+    [StringLength(2000)]
+    [Display(Name = "Full Description")]
+    public string? FullDescription { get; set; }
+
     [Display(Name = "Stock")]
     public int StockQuantity { get; set; }
 
@@ -66,6 +70,26 @@ public class Phone
     [Display(Name = "Image URL")]
     [DataType(DataType.ImageUrl)]
     public string? ImageUrl { get; set; }
+
+    [Display(Name = "Gallery Images")]
+    public List<string> GalleryImages { get; set; } = new();
+
+    [Display(Name = "Specifications")]
+    [NotMapped]
+    public PhoneSpecs? Specs { get; set; }
+
+    [Display(Name = "Variants")]
+    public List<ProductVariant> Variants { get; set; } = new();
+
+    [Display(Name = "Rating")]
+    [Range(0, 5)]
+    public double Rating { get; set; }
+
+    [Display(Name = "Review Count")]
+    public int ReviewCount { get; set; }
+
+    [Display(Name = "Total Sold")]
+    public int TotalSold { get; set; }
 
     [Display(Name = "Featured")]
     public bool IsFeatured { get; set; }
@@ -103,5 +127,21 @@ public class Phone
         PhoneCondition.UsedLikeNew => "Used",
         PhoneCondition.UsedFair => "Used",
         _ => "New"
+    };
+
+    [NotMapped]
+    public string StockStatus => StockQuantity switch
+    {
+        > 10 => "In Stock",
+        > 0 => "Low Stock",
+        _ => "Out of Stock"
+    };
+
+    [NotMapped]
+    public string StockCssClass => StockQuantity switch
+    {
+        > 10 => "text-success",
+        > 0 => "text-warning stock-urgent-pulse",
+        _ => "text-danger"
     };
 }

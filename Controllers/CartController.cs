@@ -9,6 +9,15 @@ public class CartController : Controller
 {
     private readonly MockDataService _mockData;
     private const string CartSessionKey = "ShoppingCart";
+    private const string CouponSessionKey = "AppliedCoupon";
+
+    private static readonly List<Coupon> _coupons = new()
+    {
+        new() { Code = "SAVE10", DiscountPercent = 10, MaxUses = 1000 },
+        new() { Code = "PHONE20", DiscountPercent = 20, MaxUses = 500, ValidUntil = DateTime.Now.AddMonths(3) },
+        new() { Code = "WELCOME5", DiscountPercent = 5, MaxUses = 2000 },
+        new() { Code = "FLASH15", DiscountPercent = 15, MaxUses = 100, ValidUntil = DateTime.Now.AddDays(7) }
+    };
 
     public CartController(MockDataService mockData)
     {
@@ -22,8 +31,6 @@ public class CartController : Controller
             return new ShoppingCart();
 
         var cart = JsonSerializer.Deserialize<ShoppingCart>(cartJson) ?? new ShoppingCart();
-
-        // Re-hydrate Phone references from mock data
         foreach (var item in cart.Items)
             item.Phone = _mockData.GetPhoneById(item.PhoneId);
 
@@ -32,14 +39,25 @@ public class CartController : Controller
 
     private void SaveCart(ShoppingCart cart)
     {
-        // Strip Phone references before serializing
         var saveCart = new ShoppingCart { Items = cart.Items.Select(i => new CartItem { PhoneId = i.PhoneId, Quantity = i.Quantity }).ToList() };
         HttpContext.Session.SetString(CartSessionKey, JsonSerializer.Serialize(saveCart));
+    }
+
+    private Coupon? GetAppliedCoupon()
+    {
+        var code = HttpContext.Session.GetString(CouponSessionKey);
+        if (string.IsNullOrEmpty(code)) return null;
+        return _coupons.FirstOrDefault(c => c.Code == code && c.IsValid);
     }
 
     public IActionResult Index()
     {
         var cart = GetCart();
+        var coupon = GetAppliedCoupon();
+        ViewData["Coupon"] = coupon;
+        ViewData["CouponDiscount"] = coupon != null ? cart.Subtotal * coupon.DiscountPercent / 100 : 0;
+        ViewData["Shipping"] = cart.Subtotal >= 500 ? 0 : 29.99m;
+        ViewData["Tax"] = Math.Round(cart.Subtotal * 0.08m, 2);
         return View(cart);
     }
 
@@ -85,6 +103,7 @@ public class CartController : Controller
         var cart = GetCart();
         cart.RemoveItem(id);
         SaveCart(cart);
+        TempData["CartMessage"] = "Item removed from cart.";
         return RedirectToAction("Index");
     }
 
@@ -92,5 +111,34 @@ public class CartController : Controller
     {
         var cart = GetCart();
         return Json(new { count = cart.TotalItems });
+    }
+
+    [HttpPost]
+    public IActionResult ApplyCoupon(string code)
+    {
+        var coupon = _coupons.FirstOrDefault(c => c.Code.Equals(code, StringComparison.OrdinalIgnoreCase) && c.IsValid);
+        if (coupon == null)
+        {
+            TempData["CouponError"] = "Invalid or expired coupon code.";
+            return RedirectToAction("Index");
+        }
+
+        HttpContext.Session.SetString(CouponSessionKey, coupon.Code);
+        TempData["CouponSuccess"] = $"Coupon {coupon.Code} applied! {coupon.DiscountPercent}% off.";
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    public IActionResult RemoveCoupon()
+    {
+        HttpContext.Session.Remove(CouponSessionKey);
+        TempData["CartMessage"] = "Coupon removed.";
+        return RedirectToAction("Index");
+    }
+
+    public IActionResult ValidateCoupon(string code)
+    {
+        var coupon = _coupons.FirstOrDefault(c => c.Code.Equals(code, StringComparison.OrdinalIgnoreCase) && c.IsValid);
+        return Json(coupon != null ? new { valid = true, discount = coupon.DiscountPercent } : new { valid = false });
     }
 }

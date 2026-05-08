@@ -1,148 +1,257 @@
 @page
 @model Website_Selling_Phones.Pages.Admin.IndexModel
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Admin Dashboard";
     Layout = "_AdminLayout";
 }
 
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold mb-0"><i class="bi bi-grid-fill me-2"></i>Dashboard</h3>
-        <a href="/Admin/Create" class="btn btn-success">
-            <i class="bi bi-plus-lg me-1"></i>New Product
-        </a>
+        <h3 class="fw-bold mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h3>
+        <a href="/Admin/Create" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>New Product</a>
     </div>
 
-    <!-- Stats -->
+    <!-- Stats Cards -->
     <div class="row g-3 mb-4">
         <div class="col-xl-3 col-md-6">
-            <div class="card stat-card bg-primary text-white">
+            <div class="card stat-card bg-primary text-white h-100">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
                         <small class="opacity-75">Total Products</small>
                         <div class="stat-value">@Model.TotalProducts</div>
                     </div>
-                    <div class="stat-icon bg-white bg-opacity-25">
-                        <i class="bi bi-phone"></i>
-                    </div>
+                    <div class="stat-icon bg-white bg-opacity-25"><i class="bi bi-phone"></i></div>
                 </div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6">
-            <div class="card stat-card bg-success text-white">
+            <div class="card stat-card bg-success text-white h-100">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
-                        <small class="opacity-75">In Stock</small>
-                        <div class="stat-value">@Model.InStockProducts</div>
+                        <small class="opacity-75">Total Orders</small>
+                        <div class="stat-value">@Model.TotalOrders</div>
                     </div>
-                    <div class="stat-icon bg-white bg-opacity-25">
-                        <i class="bi bi-check-circle"></i>
-                    </div>
+                    <div class="stat-icon bg-white bg-opacity-25"><i class="bi bi-cart-check"></i></div>
                 </div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6">
-            <div class="card stat-card bg-warning text-dark">
+            <div class="card stat-card bg-warning text-dark h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="opacity-75">Total Revenue</small>
+                        <div class="stat-value">$@Model.TotalRevenue.ToString("N0")</div>
+                    </div>
+                    <div class="stat-icon bg-white bg-opacity-50"><i class="bi bi-graph-up-arrow"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card bg-info text-white h-100">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
                         <small class="opacity-75">Featured</small>
                         <div class="stat-value">@Model.FeaturedProducts</div>
                     </div>
-                    <div class="stat-icon bg-white bg-opacity-50">
-                        <i class="bi bi-star-fill"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card stat-card bg-info text-white">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <small class="opacity-75">Total Value</small>
-                        <div class="stat-value">$@Model.TotalValue.ToString("F0")</div>
-                    </div>
-                    <div class="stat-icon bg-white bg-opacity-25">
-                        <i class="bi bi-cash-stack"></i>
-                    </div>
+                    <div class="stat-icon bg-white bg-opacity-25"><i class="bi bi-star-fill"></i></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Products Table -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-            <h5 class="mb-0 fw-bold">All Products</h5>
-            <small class="text-muted">@Model.TotalProducts items</small>
+    <!-- Charts Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between py-3">
+                    <h6 class="mb-0 fw-bold">Top Selling Products</h6>
+                    <small class="text-muted">By units sold</small>
+                </div>
+                <div class="card-body">
+                    <canvas id="topSellersChart" height="280"></canvas>
+                </div>
+            </div>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th style="width: 60px;">#</th>
-                            <th>Product</th>
-                            <th>Brand</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Featured</th>
-                            <th style="width: 220px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var product in Model.Products)
-                        {
-                            <tr>
-                                <td>
-                                    <img src="@product.ImageUrl" alt="@product.Name" style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px;">
-                                </td>
-                                <td class="fw-semibold">@product.Name</td>
-                                <td><span class="badge bg-light text-dark">@product.Brand</span></td>
-                                <td class="fw-bold">$@product.Price.ToString("F0")</td>
-                                <td>
-                                    @if (product.StockQuantity > 10)
-                                    {
-                                        <span class="badge bg-success">@product.StockQuantity</span>
-                                    }
-                                    else if (product.StockQuantity > 0)
-                                    {
-                                        <span class="badge bg-warning text-dark">@product.StockQuantity</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-danger">0</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (product.IsFeatured)
-                                    {
-                                        <i class="bi bi-star-fill text-warning"></i>
-                                    }
-                                    else
-                                    {
-                                        <i class="bi bi-star text-muted"></i>
-                                    }
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="/Products/Details?id=@product.Id" class="btn btn-outline-secondary" target="_blank" title="View">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <a href="/Admin/Edit?id=@product.Id" class="btn btn-outline-primary" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <form method="post" asp-page-handler="Delete" asp-route-id="@product.Id" class="d-inline" onsubmit="return confirm('Delete @product.Name?')">
-                                            <button type="submit" class="btn btn-outline-danger" title="Delete">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3"><h6 class="mb-0 fw-bold">Inventory Status</h6></div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <canvas id="inventoryChart" height="240"></canvas>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Product Management Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0 fw-bold">Product Management</h5>
+            <div class="d-flex gap-2">
+                <input type="text" id="productSearch" class="form-control form-control-sm" placeholder="Search products..." onkeyup="filterTable()" style="width:200px;">
+                <select id="brandFilter" class="form-select form-select-sm" onchange="filterTable()" style="width:120px;">
+                    <option value="">All Brands</option>
+                    @foreach (var brand in Model.Products.Select(p => p.Brand).Distinct().OrderBy(b => b))
+                    {<option value="@brand">@brand</option>}
+                </select>
+                <select id="stockFilter" class="form-select form-select-sm" onchange="filterTable()" style="width:120px;">
+                    <option value="">All Stock</option>
+                    <option value="in">In Stock</option>
+                    <option value="low">Low Stock</option>
+                    <option value="out">Out of Stock</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <form method="post" asp-page-handler="BulkAction" id="bulkForm">
+                <div class="d-flex gap-2 p-3 bg-light border-bottom">
+                    <select name="action" class="form-select form-select-sm" style="width:150px;">
+                        <option value="">Bulk Action...</option>
+                        <option value="delete">Delete Selected</option>
+                        <option value="feature">Mark Featured</option>
+                        <option value="unfeature">Unmark Featured</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-outline-primary" onclick="return confirm('Apply action to selected products?')">Apply</button>
+                    <span id="selectedCount" class="text-muted small align-self-center ms-2">0 selected</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="productTable">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+                                <th style="width:60px;"></th>
+                                <th>Product</th>
+                                <th>Brand</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Rating</th>
+                                <th>Sold</th>
+                                <th>Featured</th>
+                                <th style="width:180px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in Model.Products)
+                            {
+                                <tr data-brand="@product.Brand" data-stock="@(product.StockQuantity > 5 ? "in" : product.StockQuantity > 0 ? "low" : "out")" data-search="@product.Name.ToLower() @product.Brand?.ToLower()">
+                                    <td><input type="checkbox" name="selectedIds" value="@product.Id" class="product-check" onchange="updateSelectedCount()"></td>
+                                    <td><img src="@product.ImageUrl" alt="@product.Name" style="width:44px; height:44px; object-fit:cover; border-radius:6px;"></td>
+                                    <td class="fw-semibold">@product.Name</td>
+                                    <td><span class="badge bg-light text-dark">@product.Brand</span></td>
+                                    <td class="fw-bold">$@product.DiscountedPrice.ToString("F0")</td>
+                                    <td>
+                                        @if (product.StockQuantity > 5)
+                                        {<span class="badge bg-success">@product.StockQuantity</span>}
+                                        else if (product.StockQuantity > 0)
+                                        {<span class="badge bg-warning text-dark">@product.StockQuantity</span>}
+                                        else
+                                        {<span class="badge bg-danger">0</span>}
+                                    </td>
+                                    <td>
+                                        <div class="text-warning small">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {<i class="bi @(i <= Math.Round(product.Rating) ? "bi-star-fill" : "bi-star")"></i>}
+                                        </div>
+                                    </td>
+                                    <td>@product.TotalSold</td>
+                                    <td>
+                                        @if (product.IsFeatured)
+                                        {<i class="bi bi-star-fill text-warning"></i>}
+                                        else
+                                        {<i class="bi bi-star text-muted"></i>}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/Product/Details/@product.Id" class="btn btn-outline-secondary" target="_blank" title="View"><i class="bi bi-eye"></i></a>
+                                            <a href="/Admin/Edit?id=@product.Id" class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                            <form method="post" asp-page-handler="Delete" asp-route-id="@product.Id" class="d-inline" onsubmit="return confirm('Delete @product.Name?')">
+                                                <button type="submit" class="btn btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer bg-white d-flex justify-content-between small text-muted">
+            <span>Showing @Model.TotalProducts products</span>
+            <a href="#" onclick="exportToCSV()" class="text-decoration-none"><i class="bi bi-download me-1"></i>Export CSV</a>
+        </div>
+    </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Top sellers chart
+    var topProducts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Products.OrderByDescending(p => p.TotalSold).Take(5).Select(p => new { name = p.Name, sold = p.TotalSold })));
+    new Chart(document.getElementById('topSellersChart'), {
+        type: 'bar',
+        data: {
+            labels: topProducts.map(p => p.name),
+            datasets: [{ label: 'Units Sold', data: topProducts.map(p => p.sold), backgroundColor: ['#2563eb','#3b82f6','#60a5fa','#93c5fd','#bfdbfe'] }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    // Inventory chart
+    new Chart(document.getElementById('inventoryChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['In Stock', 'Low Stock', 'Out of Stock'],
+            datasets: [{ data: [@Model.InStockProducts, @Model.LowStockProducts, @Model.OutOfStockProducts], backgroundColor: ['#10b981','#f59e0b','#ef4444'] }]
+        },
+        options: { responsive: true }
+    });
+
+    function filterTable() {
+        var search = document.getElementById('productSearch').value.toLowerCase();
+        var brand = document.getElementById('brandFilter').value;
+        var stock = document.getElementById('stockFilter').value;
+        document.querySelectorAll('#productTable tbody tr').forEach(row => {
+            var match = (!search || row.dataset.search.includes(search)) &&
+                        (!brand || row.dataset.brand === brand) &&
+                        (!stock || row.dataset.stock === stock);
+            row.style.display = match ? '' : 'none';
+        });
+    }
+
+    function toggleSelectAll(cb) {
+        document.querySelectorAll('.product-check').forEach(c => { c.checked = cb.checked; });
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        var count = document.querySelectorAll('.product-check:checked').length;
+        document.getElementById('selectedCount').textContent = count + ' selected';
+    }
+
+    function exportToCSV() {
+        var rows = [['Product','Brand','Price','Stock','Rating','Sold'].join(',')];
+        document.querySelectorAll('#productTable tbody tr').forEach(row => {
+            if (row.style.display === 'none') return;
+            var cells = row.querySelectorAll('td');
+            rows.push([
+                cells[2].textContent.trim(),
+                cells[3].textContent.trim(),
+                cells[4].textContent.trim(),
+                cells[5].textContent.trim(),
+                cells[6].textContent.trim(),
+                cells[7].textContent.trim()
+            ].join(','));
+        });
+        var blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'products_' + new Date().toISOString().slice(0,10) + '.csv';
+        a.click();
+    }
+</script>
+
+<style>
+    .stat-card { border: none; border-radius: 12px; transition: transform 0.2s; }
+    .stat-card:hover { transform: translateY(-3px); }
+    .stat-value { font-size: 1.8rem; font-weight: 800; }
+    .stat-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+</style>

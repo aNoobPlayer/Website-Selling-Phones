@@ -43,8 +43,9 @@
                         <button class="btn btn-outline-light btn-sm" type="submit"><i class="bi bi-search"></i></button>
                     </div>
                 </form>
-                <a href="#" class="btn btn-outline-light btn-sm">
+                <a href="/Cart" class="btn btn-outline-light btn-sm position-relative">
                     <i class="bi bi-cart3"></i> Cart
+                    <span class="cart-count-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" style="font-size:0.65rem;">0</span>
                 </a>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
@@ -84,7 +85,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-dark text-white pt-5 pb-3 mt-auto">
+    <footer class="bg-dark text-white pt-5 pb-3 mt-auto mobile-pb">
         <div class="container">
             <div class="row">
                 <div class="col-md-4 mb-4">
@@ -112,15 +113,22 @@
                 <div class="col-md-4 mb-4">
                     <h6 class="fw-bold">Newsletter</h6>
                     <p class="text-muted small">Subscribe for exclusive deals and new arrivals.</p>
-                    <div class="input-group">
-                        <input type="email" class="form-control form-control-sm" placeholder="Your email">
+                    <form class="input-group newsletter-form" onsubmit="newsletterSubscribe(event)">
+                        <input type="email" class="form-control form-control-sm" placeholder="Your email" required>
                         <button class="btn btn-primary btn-sm">Subscribe</button>
-                    </div>
+                    </form>
                 </div>
             </div>
             <hr class="border-secondary">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <small class="text-muted">&copy; 2026 PhoneStore. All rights reserved.</small>
+                <div class="d-flex gap-3 align-items-center">
+                    <span class="text-muted small">Payment:</span>
+                    <i class="bi bi-credit-card text-white-50"></i>
+                    <span class="text-muted small">Visa</span>
+                    <span class="text-muted small">Mastercard</span>
+                    <i class="bi bi-paypal text-white-50"></i>
+                </div>
                 <small>
                     <a href="/Admin" class="text-muted text-decoration-none me-3">Admin</a>
                     <a href="/Privacy" class="text-muted text-decoration-none">Privacy</a>
@@ -129,9 +137,47 @@
         </div>
     </footer>
 
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav d-lg-none">
+        <a href="/" class="mobile-nav-item active">
+            <i class="bi bi-house-fill"></i><span>Home</span>
+        </a>
+        <a href="/Product" class="mobile-nav-item">
+            <i class="bi bi-search"></i><span>Search</span>
+        </a>
+        <a href="/Product" class="mobile-nav-item">
+            <i class="bi bi-grid-fill"></i><span>Shop</span>
+        </a>
+        <a href="/Cart" class="mobile-nav-item cart-nav-item">
+            <i class="bi bi-cart3"></i><span>Cart</span>
+            <span class="cart-count-badge d-none">0</span>
+        </a>
+        <a href="/Account/Login" class="mobile-nav-item">
+            <i class="bi bi-person-fill"></i><span>Account</span>
+        </a>
+    </nav>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        fetch('/Cart/GetCount').then(r => r.json()).then(d => {
+            if (d.count > 0) {
+                document.querySelectorAll('.cart-count-badge').forEach(b => { b.textContent = d.count; b.classList.remove('d-none'); });
+            }
+        });
+        function newsletterSubscribe(e) {
+            e.preventDefault();
+            var input = e.target.querySelector('input');
+            var btn = e.target.querySelector('button');
+            var orig = btn.textContent;
+            btn.textContent = 'Done!';
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-primary');
+            input.value = '';
+            setTimeout(() => { btn.textContent = orig; btn.classList.remove('btn-success'); btn.classList.add('btn-primary'); }, 2000);
+        }
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -5,123 +5,216 @@
     var calculatedPrice = ViewData["CalculatedPrice"] as decimal?;
     var promoMessage = ViewData["PromoMessage"] as string;
     var reviews = ViewData["Reviews"] as List<Website_Selling_Phones.Models.Review> ?? new();
-    var avgRating = reviews.Any() ? Math.Round(reviews.Average(r => r.Rating), 1) : 0;
+    var relatedPhones = ViewData["RelatedPhones"] as List<Website_Selling_Phones.Models.Phone> ?? new();
+    var avgRating = Model.Rating > 0 ? Model.Rating : (reviews.Any() ? Math.Round(reviews.Average(r => r.Rating), 1) : 0);
 }
 
-<div class="row g-5">
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item"><a href="/Product">Phones</a></li>
+        @if (!string.IsNullOrEmpty(Model.Brand))
+        {<li class="breadcrumb-item"><a href="/Product?brand=@Model.Brand">@Model.Brand</a></li>}
+        <li class="breadcrumb-item active">@Model.Name</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <!-- Image Gallery -->
     <div class="col-lg-6">
-        <figure class="product-gallery">
-            <img src="@Model.ImageUrl" class="img-fluid w-100" alt="@Model.Name" style="min-height: 450px; object-fit: cover;">
-            <figcaption class="gallery-badge @Model.ConditionBadgeClass">@Model.ConditionDisplayName</figcaption>
-        </figure>
+        <div class="product-gallery">
+            <div class="gallery-main mb-3">
+                <img id="mainImage" src="@Model.ImageUrl" class="img-fluid w-100 rounded-3" alt="@Model.Name" style="min-height:400px; object-fit:cover;">
+                <span class="gallery-badge @Model.ConditionBadgeClass">@Model.ConditionDisplayName</span>
+                @if (Model.DiscountPercentage > 0)
+                {<span class="discount-badge-lg">-@Model.DiscountPercentage%</span>}
+            </div>
+            @if (Model.GalleryImages.Any())
+            {
+                <div class="gallery-thumbnails d-flex gap-2 overflow-auto">
+                    @foreach (var img in Model.GalleryImages)
+                    {
+                        <img src="@img" class="gallery-thumb rounded-2 border @(img == Model.GalleryImages.First() ? "active" : "")"
+                             alt="Thumbnail" onclick="document.getElementById('mainImage').src='@img'; document.querySelectorAll('.gallery-thumb').forEach(t=>t.classList.remove('active')); this.classList.add('active');">
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Specifications Table -->
+        @if (Model.Specs != null)
+        {
+            <div class="mt-4">
+                <h4 class="fw-bold mb-3">Specifications</h4>
+                <table class="table table-bordered specs-table">
+                    <tr><td class="spec-label">Display</td><td>@Model.Specs.Display</td></tr>
+                    <tr><td class="spec-label">Processor</td><td>@Model.Specs.Processor</td></tr>
+                    <tr><td class="spec-label">RAM</td><td>@Model.Specs.Ram</td></tr>
+                    <tr><td class="spec-label">Storage</td><td>@Model.Specs.Storage</td></tr>
+                    <tr><td class="spec-label">Camera</td><td>@Model.Specs.Camera</td></tr>
+                    <tr><td class="spec-label">Battery</td><td>@Model.Specs.Battery</td></tr>
+                    <tr><td class="spec-label">OS</td><td>@Model.Specs.Os</td></tr>
+                    <tr><td class="spec-label">Weight</td><td>@Model.Specs.Weight</td></tr>
+                    <tr><td class="spec-label">Connectivity</td><td>@Model.Specs.Connectivity</td></tr>
+                </table>
+            </div>
+        }
 
         <!-- Reviews Section -->
         <div class="mt-4">
             <h4 class="fw-bold mb-3">
                 <i class="bi bi-star-fill text-warning me-1"></i>
-                @(avgRating > 0 ? $"{avgRating} / 5" : "No Reviews Yet")
-                <small class="text-muted fs-6">(@reviews.Count reviews)</small>
+                @(avgRating > 0 ? $"{avgRating:F1} / 5" : "No Reviews Yet")
+                <small class="text-muted fs-6">(@Model.ReviewCount reviews)</small>
             </h4>
 
             @foreach (var review in reviews.Take(5))
             {
-                <div class="border rounded p-3 mb-2 bg-light">
+                <div class="review-card border rounded p-3 mb-2">
                     <div class="d-flex justify-content-between align-items-center mb-1">
-                        <strong>@review.UserName</strong>
-                        <small class="text-muted">@review.CreatedAt.ToString("MMM dd")</small>
+                        <div>
+                            <strong>@review.UserName</strong>
+                            <span class="badge bg-success ms-2 small">Verified Purchase</span>
+                        </div>
+                        <small class="text-muted">@review.CreatedAt.ToString("MMM dd, yyyy")</small>
                     </div>
                     <div class="mb-1">
                         @for (int i = 1; i <= 5; i++)
-                        {
-                            <i class="bi @(i <= review.Rating ? "bi-star-fill text-warning" : "bi-star text-muted") small"></i>
-                        }
+                        {<i class="bi @(i <= review.Rating ? "bi-star-fill text-warning" : "bi-star text-muted") small"></i>}
                     </div>
                     @if (!string.IsNullOrWhiteSpace(review.Comment))
-                    {
-                        <p class="mb-0 small">@review.Comment</p>
-                    }
+                    {<p class="mb-0 small">@review.Comment</p>}
                 </div>
             }
         </div>
     </div>
 
+    <!-- Product Info Column -->
     <div class="col-lg-6">
-        <header class="mb-4">
-            <span class="brand-label mb-2 d-block">@Model.Brand</span>
+        <header class="mb-3">
+            <span class="brand-label text-primary mb-1 d-block">@Model.Brand</span>
             <h1 class="fw-bold mb-2">@Model.Name</h1>
-            <p class="text-muted">@Model.Description</p>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="text-warning">
+                    @for (int i = 1; i <= 5; i++)
+                    {<i class="bi @(i <= Math.Round(avgRating) ? "bi-star-fill" : "bi-star")"></i>}
+                </span>
+                <span class="text-muted small">(@Model.ReviewCount reviews) | @Model.TotalSold sold</span>
+            </div>
+            <p class="text-muted">@(Model.FullDescription ?? Model.Description)</p>
         </header>
 
-        <div class="pricing-block mb-4">
+        <div class="pricing-block mb-4 p-3 rounded-3 border">
             @if (Model.DiscountPercentage > 0)
             {
-                <div class="d-flex align-items-baseline gap-3">
-                    <span class="original-price-large text-decoration-line-through text-muted">$@Model.Price.ToString("F2")</span>
-                    <span class="price-tag">$@Model.DiscountedPrice.ToString("F2")</span>
-                    <span class="badge bg-danger ms-2">Save @Model.DiscountPercentage%</span>
+                <div class="d-flex align-items-baseline gap-3 flex-wrap">
+                    <span class="original-price-large text-decoration-line-through text-muted fs-5">$@Model.Price.ToString("F2")</span>
+                    <span class="price-tag fs-2 fw-bold text-primary">$@Model.DiscountedPrice.ToString("F2")</span>
+                    <span class="badge bg-danger fs-6">Save @Model.DiscountPercentage%</span>
                 </div>
             }
             else
-            {<span class="price-tag">$@Model.Price.ToString("F2")</span>}
+            {<span class="price-tag fs-2 fw-bold text-primary">$@Model.Price.ToString("F2")</span>}
             @if (calculatedPrice.HasValue && calculatedPrice.Value != Model.DiscountedPrice)
-            {
-                <div class="mt-1"><small class="text-success"><i class="bi bi-stars me-1"></i>VIP Price: $@calculatedPrice.Value.ToString("F2")</small></div>
-            }
+            {<div class="mt-1"><small class="text-success"><i class="bi bi-stars me-1"></i>VIP Price: $@calculatedPrice.Value.ToString("F2")</small></div>}
         </div>
 
         @if (!string.IsNullOrEmpty(promoMessage))
+        {<div class="promo-banner mb-4"><i class="bi bi-megaphone me-2"></i>@promoMessage</div>}
+
+        <!-- Variants -->
+        @{
+            var colors = Model.Variants.Where(v => v.Type == "Color").ToList();
+            var storages = Model.Variants.Where(v => v.Type == "Storage").ToList();
+        }
+        @if (colors.Any())
         {
-            <div class="promo-banner mb-4"><i class="bi bi-megaphone me-2"></i>@promoMessage</div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Color</label>
+                <div class="d-flex gap-2 flex-wrap">
+                    @foreach (var c in colors)
+                    {<button class="btn btn-outline-dark btn-sm variant-btn">@c.Value</button>}
+                </div>
+            </div>
+        }
+        @if (storages.Any())
+        {
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Storage</label>
+                <div class="d-flex gap-2 flex-wrap">
+                    @foreach (var s in storages)
+                    {
+                        <button class="btn btn-outline-dark btn-sm variant-btn @(storages.IndexOf(s) == 0 ? "active" : "")">
+                            @s.Value @(s.PriceModifier > 0 ? $"(+${s.PriceModifier})" : "")
+                        </button>
+                    }
+                </div>
+            </div>
         }
 
-        <dl class="row mb-4">
-            <dt class="col-sm-4 text-muted">Model</dt>
-            <dd class="col-sm-8 fw-semibold">@Model.Model</dd>
-            <dt class="col-sm-4 text-muted">Condition</dt>
-            <dd class="col-sm-8"><span class="badge @(Model.Condition == PhoneCondition.New ? "bg-success" : Model.ConditionDisplayName == "Refurbished" ? "bg-info" : "bg-secondary")">@Model.ConditionDisplayName</span></dd>
-            <dt class="col-sm-4 text-muted">Category</dt>
-            <dd class="col-sm-8">@Model.Category</dd>
-            <dt class="col-sm-4 text-muted">Availability</dt>
-            <dd class="col-sm-8">
+        <!-- Stock Status -->
+        <div class="mb-3">
+            <span class="fw-bold @Model.StockCssClass">
                 @if (Model.StockQuantity > 5)
-                {<span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>In Stock</span><small class="text-muted ms-2">(@Model.StockQuantity available)</small>}
+                {<i class="bi bi-check-circle-fill me-1"></i><span>In Stock</span><small class="text-muted ms-2">(@Model.StockQuantity available)</small>}
                 else if (Model.StockQuantity > 0)
-                {<span class="text-warning fw-bold stock-urgent-pulse"><i class="bi bi-exclamation-circle-fill me-1"></i>Low Stock</span><small class="text-muted ms-2">(Only @Model.StockQuantity left!)</small>}
+                {<i class="bi bi-exclamation-circle-fill me-1"></i><span>Low Stock</span><small class="text-muted ms-2">(Only @Model.StockQuantity left!)</small>}
                 else
-                {<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i>Out of Stock</span>}
-            </dd>
-        </dl>
+                {<i class="bi bi-x-circle-fill me-1"></i><span>Out of Stock</span>}
+            </span>
+        </div>
 
-        <div class="d-flex gap-3 mb-4">
+        <!-- Quantity Selector -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Quantity</label>
+            <div class="input-group quantity-selector" style="max-width:140px;">
+                <button class="btn btn-outline-secondary" type="button" onclick="changeQty(-1)">-</button>
+                <input type="number" id="qtyInput" class="form-control text-center" value="1" min="1" max="@Model.StockQuantity" readonly>
+                <button class="btn btn-outline-secondary" type="button" onclick="changeQty(1)">+</button>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2 mb-4 flex-wrap">
             @if (Model.StockQuantity > 0)
             {
                 <form method="post" action="/Cart/Add" class="flex-grow-1">
                     <input type="hidden" name="id" value="@Model.Id">
+                    <input type="hidden" name="quantity" id="cartQty" value="1">
                     <button type="submit" class="btn btn-primary btn-lg w-100 btn-add-to-cart">
                         <i class="bi bi-cart-plus me-2"></i>Add to Cart
                     </button>
                 </form>
-                <button class="btn btn-outline-primary btn-lg px-3"><i class="bi bi-heart"></i></button>
+                <a href="/Order/Checkout" class="btn btn-outline-primary btn-lg px-4">Buy Now</a>
             }
             else
             {<button class="btn btn-secondary btn-lg flex-grow-1" disabled><i class="bi bi-x-circle me-2"></i>Out of Stock</button>}
+            <button class="btn btn-outline-secondary btn-lg px-3 wishlist-btn" data-id="@Model.Id">
+                <i class="bi bi-heart"></i>
+            </button>
+            <button class="btn btn-outline-secondary btn-lg px-3" onclick="navigator.share&&navigator.share({title:'@Model.Name',url:window.location.href})">
+                <i class="bi bi-share"></i>
+            </button>
         </div>
 
-        <div class="guarantee-strip p-3 rounded">
-            <div class="row text-center small g-0">
-                <div class="col-4"><i class="bi bi-truck me-1"></i>Free Shipping</div>
-                <div class="col-4"><i class="bi bi-shield-check me-1"></i>2-Year Warranty</div>
-                <div class="col-4"><i class="bi bi-arrow-return-left me-1"></i>30-Day Returns</div>
+        <!-- Trust Badges -->
+        <div class="trust-strip p-3 rounded-3 border mb-4">
+            <h6 class="fw-bold mb-2 small text-uppercase text-muted">Why buy from us</h6>
+            <div class="row g-2 small">
+                <div class="col-6"><i class="bi bi-truck me-1 text-primary"></i>Free Shipping over $500</div>
+                <div class="col-6"><i class="bi bi-shield-check me-1 text-primary"></i>2-Year Warranty</div>
+                <div class="col-6"><i class="bi bi-arrow-return-left me-1 text-primary"></i>30-Day Returns</div>
+                <div class="col-6"><i class="bi bi-lock-fill me-1 text-primary"></i>Secure Checkout</div>
             </div>
         </div>
 
         <!-- Submit Review -->
-        <div class="mt-4">
-            <h5 class="fw-bold mb-3">Write a Review</h5>
+        <div class="mt-3">
+            <h6 class="fw-bold mb-2">Write a Review</h6>
             <form method="post" action="/Product/SubmitReview">
+                @Html.AntiForgeryToken()
                 <input type="hidden" name="phoneId" value="@Model.Id">
                 <div class="mb-2">
-                    <label class="form-label small fw-semibold">Rating</label>
                     <div class="star-rating">
                         @for (int i = 5; i >= 1; i--)
                         {
@@ -130,27 +223,78 @@
                         }
                     </div>
                 </div>
-                <div class="mb-3">
-                    <textarea name="comment" class="form-control" rows="3" placeholder="Share your thoughts..."></textarea>
-                </div>
-                <button type="submit" class="btn btn-outline-primary">Submit Review</button>
+                <textarea name="comment" class="form-control mb-2" rows="2" placeholder="Share your thoughts..."></textarea>
+                <button type="submit" class="btn btn-outline-primary btn-sm">Submit Review</button>
             </form>
         </div>
     </div>
 </div>
 
+<!-- Related Products -->
+@if (relatedPhones.Any())
+{
+    <section class="mt-5">
+        <h3 class="fw-bold mb-3">You May Also Like</h3>
+        <div class="row g-3">
+            @foreach (var related in relatedPhones)
+            {
+                <div class="col-6 col-md-3">
+                    <a href="/Product/Details/@related.Id" class="text-decoration-none text-reset">
+                        <div class="card related-card h-100">
+                            <img src="@related.ImageUrl" class="card-img-top" alt="@related.Name" style="height:180px; object-fit:cover;">
+                            <div class="card-body p-2">
+                                <small class="brand-label d-block">@related.Brand</small>
+                                <p class="card-text small fw-semibold mb-1">@related.Name</p>
+                                <span class="text-primary fw-bold small">$@related.DiscountedPrice.ToString("F0")</span>
+                                <div class="small text-warning">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {<i class="bi @(i <= Math.Round(related.Rating) ? "bi-star-fill" : "bi-star") small"></i>}
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </section>
+}
+
 <style>
+    .gallery-main { position: relative; }
+    .gallery-badge { position: absolute; top: 12px; left: 12px; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .badge-new { background: #34a853; color: #fff; }
+    .badge-refurbished { background: #1a73e8; color: #fff; }
+    .badge-used { background: #5f6368; color: #fff; }
+    .discount-badge-lg { position: absolute; top: 12px; right: 12px; padding: 6px 14px; background: #ea4335; color: #fff; border-radius: 20px; font-weight: 700; font-size: 0.9rem; }
+    .gallery-thumb { width: 70px; height: 70px; object-fit: cover; cursor: pointer; transition: 0.2s; }
+    .gallery-thumb.active { border: 2px solid #1a73e8 !important; }
+    .gallery-thumb:hover { opacity: 0.8; }
+    .specs-table td { padding: 8px 12px; font-size: 0.9rem; }
+    .specs-table .spec-label { font-weight: 600; width: 130px; background: #f8f9fa; }
+    .variant-btn.active { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+    .trust-strip { background: #f8f9fa; }
     .star-rating { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 2px; }
     .star-rating input { display: none; }
     .star-rating label { cursor: pointer; color: #ddd; font-size: 1.3rem; transition: color 0.2s; }
-    .star-rating label:hover,
-    .star-rating label:hover ~ label,
-    .star-rating input:checked ~ label { color: #f59e0b; }
+    .star-rating label:hover, .star-rating label:hover ~ label, .star-rating input:checked ~ label { color: #f59e0b; }
+    .breadcrumb { background: none; padding: 0; }
+    .review-card { background: #fff; }
+    .related-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .related-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
 </style>
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script>
+        function changeQty(delta) {
+            var input = document.getElementById('qtyInput');
+            var val = parseInt(input.value) + delta;
+            if (val < 1) val = 1;
+            if (val > @Model.StockQuantity) val = @Model.StockQuantity;
+            input.value = val;
+            document.getElementById('cartQty').value = val;
+        }
+
         const connection = new signalR.HubConnectionBuilder().withUrl("/hubs/inventory").build();
         connection.on("ReceivePriceUpdate", data => {
             if (data.productName === "@Model.Name") {
@@ -159,5 +303,30 @@
             }
         });
         connection.start().catch(err => console.log("SignalR:", err));
+
+        document.querySelectorAll('.variant-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.parentElement.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        fetch('/Wishlist/IsInWishlist?id=@Model.Id')
+            .then(r => r.json())
+            .then(data => {
+                var btn = document.querySelector('.wishlist-btn i');
+                if (data.inWishlist) { btn.classList.remove('bi-heart'); btn.classList.add('bi-heart-fill', 'text-danger'); }
+            });
+
+        document.querySelector('.wishlist-btn')?.addEventListener('click', function() {
+            var btn = this;
+            fetch('/Wishlist/Toggle', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'id=@Model.Id' })
+                .then(r => r.json())
+                .then(data => {
+                    var icon = btn.querySelector('i');
+                    if (data.added) { icon.classList.remove('bi-heart'); icon.classList.add('bi-heart-fill', 'text-danger'); }
+                    else { icon.classList.remove('bi-heart-fill', 'text-danger'); icon.classList.add('bi-heart'); }
+                });
+        });
     </script>
 }

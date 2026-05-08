@@ -9,7 +9,13 @@
     var currentBrand = ViewData["CurrentBrand"] as string ?? "";
     var currentCategory = ViewData["CurrentCategory"] as string ?? "";
     var currentCondition = ViewData["CurrentCondition"] as string ?? "";
-    var currentSort = ViewData["CurrentSort"] as string ?? "";
+    var currentSort = ViewData["CurrentSort"] as string ?? "featured";
+    var viewMode = ViewData["ViewMode"] as string ?? "grid";
+    var minPrice = ViewData["MinPrice"] as decimal? ?? 0;
+    var maxPrice = ViewData["MaxPrice"] as decimal? ?? 1500;
+    var activeFilterCount = (int)(ViewData["ActiveFilterCount"] ?? 0);
+    var brands = ViewData["Brands"] as List<string> ?? new();
+    var categories = ViewData["Categories"] as List<string> ?? new();
 }
 
 <header class="page-header">
@@ -21,100 +27,196 @@
 
 <div class="container py-4">
     <div class="row">
+        <!-- Sidebar Filters -->
         <aside class="col-lg-3 mb-4">
-            @await Component.InvokeAsync("CategoryMenu", new { currentCategory = currentCategory })
-            <div class="sidebar-filter mt-3">
-                <div class="sidebar-section p-3">
-                    <h5 class="fw-bold small text-uppercase text-muted mb-2">Condition</h5>
-                    <div class="d-flex flex-wrap gap-1">
-                        <a href="?condition=New" class="btn btn-sm @(currentCondition == "New" ? "btn-primary" : "btn-outline-secondary")">New</a>
-                        <a href="?condition=Refurbished" class="btn btn-sm @(currentCondition == "Refurbished" ? "btn-primary" : "btn-outline-secondary")">Refurbished</a>
-                        <a href="?condition=Used" class="btn btn-sm @(currentCondition == "Used" ? "btn-primary" : "btn-outline-secondary")">Used</a>
+            <div class="sidebar-filter">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Filters</h5>
+                    @if (activeFilterCount > 0)
+                    {
+                        <span class="badge bg-primary rounded-pill">@activeFilterCount active</span>
+                    }
+                </div>
+
+                <!-- Search -->
+                <div class="sidebar-section p-3 mb-3 border rounded">
+                    <div class="position-relative">
+                        <input type="text" id="searchInput" class="form-control" value="@search" placeholder="Search phones..." autocomplete="off">
+                        <div id="searchSuggestions" class="search-suggestions d-none position-absolute w-100 bg-white border rounded shadow-sm"></div>
                     </div>
                 </div>
+
+                <!-- Price Range -->
+                <div class="sidebar-section p-3 mb-3 border rounded">
+                    <h6 class="fw-bold small text-uppercase text-muted mb-2">Price Range</h6>
+                    <div class="d-flex gap-2 align-items-center mb-2">
+                        <input type="number" id="minPriceInput" class="form-control form-control-sm" placeholder="Min" value="@(minPrice > 0 ? minPrice.ToString("F0") : "")">
+                        <span>-</span>
+                        <input type="number" id="maxPriceInput" class="form-control form-control-sm" placeholder="Max" value="@(maxPrice < 1500 ? maxPrice.ToString("F0") : "")">
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary w-100" onclick="applyPriceRange()">Apply Price</button>
+                </div>
+
+                <!-- Brand -->
+                <div class="sidebar-section p-3 mb-3 border rounded">
+                    <h6 class="fw-bold small text-uppercase text-muted mb-2">Brand</h6>
+                    @foreach (var brand in brands)
+                    {
+                        <a href="?brand=@brand&category=@currentCategory&condition=@currentCondition&sort=@currentSort&search=@search" class="d-block filter-link @(currentBrand == brand ? "active" : "")">@brand</a>
+                    }
+                    @if (!string.IsNullOrEmpty(currentBrand))
+                    {<a href="?category=@currentCategory&sort=@currentSort&search=@search" class="d-block text-danger small">Clear brand filter</a>}
+                </div>
+
+                <!-- Category -->
+                <div class="sidebar-section p-3 mb-3 border rounded">
+                    <h6 class="fw-bold small text-uppercase text-muted mb-2">Category</h6>
+                    @foreach (var cat in categories)
+                    {
+                        <a href="?brand=@currentBrand&category=@cat&condition=@currentCondition&sort=@currentSort&search=@search" class="d-block filter-link @(currentCategory == cat ? "active" : "")">@cat</a>
+                    }
+                </div>
+
+                <!-- Condition -->
+                <div class="sidebar-section p-3 mb-3 border rounded">
+                    <h6 class="fw-bold small text-uppercase text-muted mb-2">Condition</h6>
+                    <div class="d-flex flex-wrap gap-1">
+                        <a href="?brand=@currentBrand&category=@currentCategory&condition=New&sort=@currentSort&search=@search" class="btn btn-sm @(currentCondition == "New" ? "btn-primary" : "btn-outline-secondary")">New</a>
+                        <a href="?brand=@currentBrand&category=@currentCategory&condition=Refurbished&sort=@currentSort&search=@search" class="btn btn-sm @(currentCondition == "Refurbished" ? "btn-primary" : "btn-outline-secondary")">Refurbished</a>
+                        <a href="?brand=@currentBrand&category=@currentCategory&condition=Used&sort=@currentSort&search=@search" class="btn btn-sm @(currentCondition == "Used" ? "btn-primary" : "btn-outline-secondary")">Used</a>
+                    </div>
+                </div>
+
+                @if (activeFilterCount > 0)
+                {<a href="/Product" class="btn btn-outline-danger btn-sm w-100 mt-2">Clear All Filters</a>}
             </div>
         </aside>
 
+        <!-- Main Content -->
         <main class="col-lg-9">
-            <div class="toolbar d-flex flex-wrap justify-content-between align-items-center mb-3 p-3">
-                <form method="get" class="d-flex gap-2 flex-grow-1 me-3">
-                    @if (!string.IsNullOrEmpty(currentBrand))
-                    {<input type="hidden" name="brand" value="@currentBrand">}
-                    @if (!string.IsNullOrEmpty(currentCategory))
-                    {<input type="hidden" name="category" value="@currentCategory">}
-                    @if (!string.IsNullOrEmpty(currentCondition))
-                    {<input type="hidden" name="condition" value="@currentCondition">}
-                    <div class="input-group">
-                        <input type="text" name="search" value="@search" class="form-control" placeholder="Search phones...">
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+            <!-- Toolbar -->
+            <div class="toolbar d-flex flex-wrap justify-content-between align-items-center mb-3 p-3 border rounded">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">@totalItems results</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <select class="form-select form-select-sm w-auto" value="@currentSort" onchange="window.location.href='?brand=@currentBrand&category=@currentCategory&condition=@currentCondition&search=@search&sort='+this.value">
+                        <option value="featured" selected=@(currentSort == "featured")>Featured</option>
+                        <option value="price_asc" selected=@(currentSort == "price_asc")>Price: Low-High</option>
+                        <option value="price_desc" selected=@(currentSort == "price_desc")>Price: High-Low</option>
+                        <option value="newest" selected=@(currentSort == "newest")>Newest</option>
+                        <option value="rating" selected=@(currentSort == "rating")>Highest Rated</option>
+                        <option value="popularity" selected=@(currentSort == "popularity")>Most Popular</option>
+                    </select>
+                    <div class="btn-group btn-group-sm">
+                        <a href="?brand=@currentBrand&category=@currentCategory&condition=@currentCondition&sort=@currentSort&search=@search&view=grid" class="btn @(viewMode != "list" ? "btn-primary" : "btn-outline-secondary")"><i class="bi bi-grid-fill"></i></a>
+                        <a href="?brand=@currentBrand&category=@currentCategory&condition=@currentCondition&sort=@currentSort&search=@search&view=list" class="btn @(viewMode == "list" ? "btn-primary" : "btn-outline-secondary")"><i class="bi bi-list"></i></a>
                     </div>
-                </form>
-                <select class="form-select form-select-sm w-auto" onchange="window.location.href='?brand=@currentBrand&category=@currentCategory&condition=@currentCondition&search=@search&sort=' + this.value">
-                    <option value="featured">Featured</option>
-                    <option value="price_asc">Price: Low-High</option>
-                    <option value="price_desc">Price: High-Low</option>
-                    <option value="name_asc">Name: A-Z</option>
-                    <option value="newest">Newest</option>
-                </select>
+                </div>
             </div>
 
-            <div class="product-grid">
+            <!-- Products -->
+            <div class="@(viewMode == "list" ? "product-list-view" : "product-grid")">
                 @foreach (var phone in Model)
                 {
-                    <article class="product-card-v2 skeleton-ready" data-animate="fadeInUp">
-                        <figure class="product-image-container">
-                            <img src="@phone.ImageUrl" alt="@phone.Name" loading="lazy">
-                            <figcaption class="condition-badge @phone.ConditionBadgeClass">@phone.ConditionDisplayName</figcaption>
-                            @if (phone.DiscountPercentage > 0)
-                            {<span class="discount-badge">-@phone.DiscountPercentage%</span>}
-                        </figure>
-                        <div class="product-info">
-                            <span class="brand-label">@phone.Brand</span>
-                            <h3>@phone.Name</h3>
-                            <div class="price-row">
-                                @if (phone.DiscountPercentage > 0)
-                                {
-                                    <span class="original-price">$@phone.Price.ToString("F0")</span>
-                                    <span class="current-price">$@phone.DiscountedPrice.ToString("F0")</span>
-                                }
-                                else
-                                {<span class="current-price">$@phone.Price.ToString("F0")</span>}
+                    if (viewMode == "list")
+                    {
+                        <article class="product-card-list skeleton-ready mb-3 border rounded p-3 d-flex gap-3">
+                            <figure class="m-0" style="flex:0 0 180px;">
+                                <img src="@phone.ImageUrl" alt="@phone.Name" loading="lazy" class="img-fluid rounded" style="width:180px; height:180px; object-fit:cover;">
+                            </figure>
+                            <div class="flex-grow-1">
+                                <span class="brand-label">@phone.Brand</span>
+                                <h3 class="h5 mb-1">@phone.Name</h3>
+                                <div class="text-warning small mb-1">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {<i class="bi @(i <= Math.Round(phone.Rating) ? "bi-star-fill" : "bi-star")"></i>}
+                                    <span class="text-muted ms-1">(@phone.ReviewCount)</span>
+                                </div>
+                                <p class="small text-muted mb-2">@phone.Description</p>
+                                <div class="d-flex align-items-baseline gap-2 mb-2">
+                                    @if (phone.DiscountPercentage > 0)
+                                    {<span class="text-decoration-line-through text-muted small">$@phone.Price.ToString("F0")</span>}
+                                    <span class="fw-bold text-primary">$@phone.DiscountedPrice.ToString("F0")</span>
+                                    @if (phone.DiscountPercentage > 0)
+                                    {<span class="badge bg-danger">-@phone.DiscountPercentage%</span>}
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <a href="/Product/Details/@phone.Id" class="btn btn-outline-primary btn-sm">Details</a>
+                                    <form method="post" action="/Cart/AddAjax" class="ajax-cart-form">
+                                        <input type="hidden" name="id" value="@phone.Id">
+                                        <button type="submit" class="btn btn-primary btn-sm">Add to Cart</button>
+                                    </form>
+                                </div>
                             </div>
-                            @if (phone.StockQuantity <= 3 && phone.StockQuantity > 0)
-                            {<small class="text-warning stock-urgent">Only @phone.StockQuantity left!</small>}
-                            else if (phone.StockQuantity == 0)
-                            {<small class="text-danger">Out of stock</small>}
-                        </div>
-                        <footer class="product-actions d-flex gap-1">
-                            <a href="/Product/Details/@phone.Id" class="btn btn-outline-primary btn-sm flex-grow-1">Details</a>
-                            <form method="post" action="/Cart/AddAjax" class="flex-grow-1 ajax-cart-form">
-                                <input type="hidden" name="id" value="@phone.Id">
-                                <button type="submit" class="btn btn-primary btn-sm w-100">Add to Cart</button>
-                            </form>
-                        </footer>
-                    </article>
+                        </article>
+                    }
+                    else
+                    {
+                        <article class="product-card-v2 skeleton-ready" data-animate="fadeInUp">
+                            <figure class="product-image-container">
+                                <img src="@phone.ImageUrl" alt="@phone.Name" loading="lazy">
+                                <figcaption class="condition-badge @phone.ConditionBadgeClass">@phone.ConditionDisplayName</figcaption>
+                                @if (phone.DiscountPercentage > 0)
+                                {<span class="discount-badge">-@phone.DiscountPercentage%</span>}
+                                <div class="quick-actions">
+                                    <button class="btn btn-light btn-sm rounded-circle wishlist-quick-btn" data-id="@phone.Id" title="Wishlist"><i class="bi bi-heart"></i></button>
+                                </div>
+                            </figure>
+                            <div class="product-info">
+                                <span class="brand-label">@phone.Brand</span>
+                                <h3>@phone.Name</h3>
+                                <div class="text-warning small mb-1">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {<i class="bi @(i <= Math.Round(phone.Rating) ? "bi-star-fill" : "bi-star")"></i>}
+                                    <span class="text-muted ms-1">(@phone.ReviewCount)</span>
+                                </div>
+                                <div class="price-row">
+                                    @if (phone.DiscountPercentage > 0)
+                                    {
+                                        <span class="original-price">$@phone.Price.ToString("F0")</span>
+                                        <span class="current-price">$@phone.DiscountedPrice.ToString("F0")</span>
+                                    }
+                                    else
+                                    {<span class="current-price">$@phone.Price.ToString("F0")</span>}
+                                </div>
+                                @if (phone.StockQuantity <= 3 && phone.StockQuantity > 0)
+                                {<small class="text-warning stock-urgent">Only @phone.StockQuantity left!</small>}
+                                else if (phone.StockQuantity == 0)
+                                {<small class="text-danger">Out of stock</small>}
+                            </div>
+                            <footer class="product-actions d-flex gap-1">
+                                <a href="/Product/Details/@phone.Id" class="btn btn-outline-primary btn-sm flex-grow-1">Details</a>
+                                <form method="post" action="/Cart/AddAjax" class="flex-grow-1 ajax-cart-form">
+                                    <input type="hidden" name="id" value="@phone.Id">
+                                    <button type="submit" class="btn btn-primary btn-sm w-100">Add to Cart</button>
+                                </form>
+                            </footer>
+                        </article>
+                    }
                 }
             </div>
 
+            <!-- Pagination -->
             @if (totalPages > 1)
             {
                 var prevPage = currentPage - 1;
                 var nextPage = currentPage + 1;
-                var baseUrl = "?brand=" + currentBrand + "&category=" + currentCategory + "&condition=" + currentCondition + "&sort=" + currentSort + "&search=" + search + "&page=";
+                var baseUrl = "?brand=" + currentBrand + "&category=" + currentCategory + "&condition=" + currentCondition + "&sort=" + currentSort + "&search=" + search + "&view=" + viewMode + "&page=";
 
                 <nav class="mt-4">
                     <ul class="pagination justify-content-center">
                         <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                            <a class="page-link" href="@(baseUrl)@prevPage">&laquo;</a>
+                            <a class="page-link" href="@(baseUrl)@prevPage">&laquo; Previous</a>
                         </li>
-                        @for (int i = 1; i <= totalPages; i++)
+                        @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
                         {
                             <li class="page-item @(i == currentPage ? "active" : "")">
                                 <a class="page-link" href="@(baseUrl)@i">@i</a>
                             </li>
                         }
                         <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                            <a class="page-link" href="@(baseUrl)@nextPage">&raquo;</a>
+                            <a class="page-link" href="@(baseUrl)@nextPage">Next &raquo;</a>
                         </li>
                     </ul>
                 </nav>
@@ -122,11 +224,11 @@
 
             @if (!Model.Any())
             {
-                <div class="empty-state">
-                    <i class="bi bi-search"></i>
+                <div class="empty-state text-center py-5">
+                    <i class="bi bi-search display-1 text-muted"></i>
                     <h4>No phones found</h4>
-                    <p>Try adjusting your filters.</p>
-                    <a href="/Product" class="btn btn-primary">View All</a>
+                    <p class="text-muted">Try adjusting your search or filters.</p>
+                    <a href="/Product" class="btn btn-primary">View All Phones</a>
                 </div>
             }
         </main>
@@ -138,24 +240,89 @@
     <script>
         const connection = new signalR.HubConnectionBuilder().withUrl("/hubs/inventory").build();
         connection.on("ReceiveLowStockAlert", data => {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-warning alert-dismissible fade show';
-            alertDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>' + data.message +
-                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
-            document.querySelector('main')?.prepend(alertDiv);
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification toast-warning';
+            toast.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>' + data.message;
+            document.querySelector('main')?.prepend(toast);
+            setTimeout(() => toast.remove(), 5000);
         });
         connection.start().catch(err => console.log("SignalR:", err));
 
+        function applyPriceRange() {
+            var min = document.getElementById('minPriceInput').value;
+            var max = document.getElementById('maxPriceInput').value;
+            var url = '?brand=@currentBrand&category=@currentCategory&condition=@currentCondition&sort=@currentSort&search=@search';
+            if (min) url += '&minPrice=' + min;
+            if (max) url += '&maxPrice=' + max;
+            window.location.href = url;
+        }
+
+        // AJAX search suggestions
+        var searchTimeout;
+        document.getElementById('searchInput')?.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            var q = this.value;
+            var suggestionsDiv = document.getElementById('searchSuggestions');
+            if (q.length < 2) { suggestionsDiv.classList.add('d-none'); return; }
+            searchTimeout = setTimeout(() => {
+                fetch('/Product/SearchSuggestions?q=' + encodeURIComponent(q))
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.length) { suggestionsDiv.classList.add('d-none'); return; }
+                        suggestionsDiv.innerHTML = data.map(p =>
+                            '<a href="/Product/Details/' + p.id + '" class="search-suggestion-item d-flex align-items-center gap-2 p-2 text-decoration-none text-reset border-bottom">' +
+                            '<img src="' + p.image + '" width="40" height="40" class="rounded" style="object-fit:cover">' +
+                            '<div><strong>' + p.name + '</strong><br><small class="text-muted">' + p.brand + ' - $' + p.price.toFixed(0) + '</small></div>' +
+                            '</a>'
+                        ).join('');
+                        suggestionsDiv.classList.remove('d-none');
+                    });
+            }, 300);
+        });
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#searchInput') && !e.target.closest('#searchSuggestions'))
+                document.getElementById('searchSuggestions')?.classList.add('d-none');
+        });
+
+        // AJAX cart
         document.querySelectorAll('.ajax-cart-form').forEach(form => {
             form.addEventListener('submit', async e => {
                 e.preventDefault();
-                const formData = new FormData(form);
-                const response = await fetch('/Cart/AddAjax', { method: 'POST', body: formData });
-                const data = await response.json();
-                const btn = form.querySelector('button');
+                var formData = new FormData(form);
+                var response = await fetch('/Cart/AddAjax', { method: 'POST', body: formData });
+                var data = await response.json();
+                var btn = form.querySelector('button');
                 btn.classList.add('cart-success');
                 btn.innerHTML = '<i class="bi bi-check-lg"></i>';
                 setTimeout(() => { btn.classList.remove('cart-success'); btn.innerHTML = 'Add to Cart'; }, 1000);
+                updateCartCount(data.totalItems);
+            });
+        });
+
+        function updateCartCount(count) {
+            var badge = document.querySelector('.cart-count-badge');
+            if (badge) badge.textContent = count;
+        }
+
+        // Wishlist quick toggle
+        document.querySelectorAll('.wishlist-quick-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var id = this.dataset.id;
+                fetch('/Wishlist/Toggle', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'id='+id })
+                    .then(r => r.json())
+                    .then(data => {
+                        this.querySelector('i').classList.toggle('bi-heart-fill', data.added);
+                        this.querySelector('i').classList.toggle('text-danger', data.added);
+                        this.querySelector('i').classList.toggle('bi-heart', !data.added);
+                    });
+            });
+            var id = btn.dataset.id;
+            fetch('/Wishlist/IsInWishlist?id='+id).then(r=>r.json()).then(data => {
+                if (data.inWishlist) {
+                    btn.querySelector('i').classList.remove('bi-heart');
+                    btn.querySelector('i').classList.add('bi-heart-fill', 'text-danger');
+                }
             });
         });
     </script>

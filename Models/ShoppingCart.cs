@@ -18,6 +18,7 @@ public class ShoppingCart
     public List<CartItem> Items { get; set; } = new();
 
     public decimal TotalPrice => Items.Sum(i => (i.Phone?.DiscountedPrice ?? 0) * i.Quantity);
+    public decimal Subtotal => TotalPrice;
     public int TotalItems => Items.Sum(i => i.Quantity);
 
     public void AddItem(Phone phone, int quantity = 1)

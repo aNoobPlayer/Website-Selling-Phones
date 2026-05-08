@@ -1,65 +1,145 @@
 @model Website_Selling_Phones.Models.ShoppingCart
 @{
     ViewData["Title"] = "Checkout";
-    Layout = "_ItemLayout";
+    Layout = "_ShopLayout";
+    var step = (int)(ViewData["Step"] ?? 1);
+    var coupon = ViewData["Coupon"] as Website_Selling_Phones.Models.Coupon;
+    var couponDiscount = (decimal)(ViewData["CouponDiscount"] ?? 0m);
+    var shippingDefault = (decimal)(ViewData["Shipping"] ?? 0m);
+    var shippingOptions = ViewData["ShippingOptions"] as List<Website_Selling_Phones.Models.ShippingOption> ?? new();
+    var tax = (decimal)(ViewData["Tax"] ?? 0m);
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <h2 class="fw-bold mb-4"><i class="bi bi-credit-card me-2"></i>Checkout</h2>
+<div class="container py-4">
+    <div class="checkout-progress mb-4">
+        <div class="d-flex justify-content-center align-items-center">
+            <div class="progress-step @(step >= 1 ? "active" : "")"><span>1</span><small>Shipping</small></div>
+            <div class="progress-line @(step >= 2 ? "active" : "")"></div>
+            <div class="progress-step @(step >= 2 ? "active" : "")"><span>2</span><small>Payment</small></div>
+            <div class="progress-line @(step >= 3 ? "active" : "")"></div>
+            <div class="progress-step @(step >= 3 ? "active" : "")"><span>3</span><small>Review</small></div>
+        </div>
+    </div>
 
-        <form method="post" action="/Order/PlaceOrder">
-            <div class="row g-4">
-                <div class="col-md-8">
-                    <div class="card border-0 shadow-sm mb-3">
-                        <div class="card-body">
-                            <h5 class="fw-bold mb-3">Shipping Address</h5>
-                            <div class="mb-3">
-                                <textarea name="shippingAddress" class="form-control" rows="3" placeholder="Enter your full shipping address" required></textarea>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <form method="post" action="/Order/PlaceOrder">
+                @Html.AntiForgeryToken()
+
+                @if (step <= 1)
+                {
+                    <div class="border rounded p-4 mb-3">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-truck me-2"></i>Shipping Address</h5>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label small">Full Name</label>
+                                <input name="customerName" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small">Email</label>
+                                <input name="customerEmail" type="email" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small">Address</label>
+                                <input name="shippingAddress" class="form-control" placeholder="123 Main St, City, State ZIP" required>
                             </div>
                         </div>
                     </div>
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="fw-bold mb-3">Payment Method</h5>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="paymentMethod" value="Credit Card" id="cc" checked>
-                                <label class="form-check-label" for="cc">💳 Credit Card</label>
+                }
+
+                @if (step <= 2)
+                {
+                    <div class="border rounded p-4 mb-3">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-box-seam me-2"></i>Shipping Method</h5>
+                        @foreach (var opt in shippingOptions)
+                        {
+                            <div class="form-check border rounded p-3 mb-2">
+                                <input class="form-check-input" type="radio" name="shippingMethod" value="@opt.Name.Split(' ')[0]" @(shippingOptions.IndexOf(opt) == 0 ? "checked" : "")>
+                                <label class="form-check-label d-flex justify-content-between w-100">
+                                    <span>@opt.Name</span>
+                                    <span class="fw-bold">@(opt.Price == 0 ? "FREE" : $"${opt.Price:F2}")</span>
+                                </label>
                             </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="paymentMethod" value="PayPal" id="pp">
-                                <label class="form-check-label" for="pp">🅿 PayPal</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="paymentMethod" value="COD" id="cod">
-                                <label class="form-check-label" for="cod">💵 Cash on Delivery</label>
-                            </div>
+                        }
+
+                        <h5 class="fw-bold mb-3 mt-4"><i class="bi bi-credit-card me-2"></i>Payment Method</h5>
+                        <div class="form-check border rounded p-3 mb-2">
+                            <input class="form-check-input" type="radio" name="paymentMethod" value="Credit Card" checked>
+                            <label class="form-check-label"><i class="bi bi-credit-card me-1"></i>Credit / Debit Card</label>
+                        </div>
+                        <div class="form-check border rounded p-3 mb-2">
+                            <input class="form-check-input" type="radio" name="paymentMethod" value="PayPal">
+                            <label class="form-check-label"><i class="bi bi-paypal me-1"></i>PayPal</label>
+                        </div>
+                        <div class="form-check border rounded p-3 mb-2">
+                            <input class="form-check-input" type="radio" name="paymentMethod" value="Apple Pay">
+                            <label class="form-check-label"><i class="bi bi-apple me-1"></i>Apple Pay</label>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="fw-bold mb-3">Order Summary</h5>
-                            @foreach (var item in Model.Items)
-                            {
-                                <div class="d-flex justify-content-between small mb-2">
-                                    <span>@item.Phone?.Name x @item.Quantity</span>
-                                    <span>$@((item.Phone?.DiscountedPrice ?? 0) * item.Quantity).ToString("F2")</span>
-                                </div>
-                            }
-                            <hr>
-                            <div class="d-flex justify-content-between mb-3">
-                                <strong>Total</strong>
-                                <strong class="text-primary fs-5">$@Model.TotalPrice.ToString("F2")</strong>
+                }
+
+                @if (step <= 3)
+                {
+                    <div class="border rounded p-4 mb-3">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-list-check me-2"></i>Order Review</h5>
+                        @foreach (var item in Model.Items)
+                        {
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>@item.Phone?.Name x @item.Quantity</span>
+                                <span>$@((item.Phone?.DiscountedPrice * item.Quantity) ?? 0).ToString("F2")</span>
                             </div>
-                            <button type="submit" class="btn btn-success w-100 btn-lg">
-                                <i class="bi bi-check-circle me-2"></i>Place Order
-                            </button>
-                        </div>
+                        }
                     </div>
-                </div>
+                }
+
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-lock-fill me-1"></i>Place Order
+                </button>
+            </form>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="border rounded p-3 sticky-top" style="top:90px;">
+                <h6 class="fw-bold mb-3">Order Summary</h6>
+                @foreach (var item in Model.Items)
+                {
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span>@item.Phone?.Name <span class="text-muted">x@(item.Quantity)</span></span>
+                        <span>$@((item.Phone?.DiscountedPrice * item.Quantity) ?? 0).ToString("F2")</span>
+                    </div>
+                }
+                <hr>
+                <div class="d-flex justify-content-between mb-1 small"><span>Subtotal</span><span>$@Model.TotalPrice.ToString("F2")</span></div>
+                @if (couponDiscount > 0)
+                {<div class="d-flex justify-content-between mb-1 small text-success"><span>Discount</span><span>-$@couponDiscount.ToString("F2")</span></div>}
+                <div class="d-flex justify-content-between mb-1 small"><span>Shipping</span><span id="shippingPreview">@(shippingDefault == 0 ? "FREE" : $"${shippingDefault:F2}")</span></div>
+                <div class="d-flex justify-content-between mb-2 small"><span>Tax</span><span>$@tax.ToString("F2")</span></div>
+                <hr>
+                @{
+                    var total = Model.TotalPrice - couponDiscount + shippingDefault + tax;
+                }
+                <div class="d-flex justify-content-between fw-bold mb-0"><span>Total</span><span class="fs-5">$@total.ToString("F2")</span></div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
+
+<style>
+    .checkout-progress { }
+    .progress-step { display: flex; flex-direction: column; align-items: center; }
+    .progress-step span { width: 32px; height: 32px; border-radius: 50%; background: #e0e0e0; color: #666; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; margin-bottom: 4px; }
+    .progress-step.active span { background: #1a73e8; color: #fff; }
+    .progress-step small { font-size: 0.7rem; color: #999; }
+    .progress-step.active small { color: #1a73e8; font-weight: 600; }
+    .progress-line { width: 60px; height: 3px; background: #e0e0e0; margin: 0 8px 16px; }
+    .progress-line.active { background: #1a73e8; }
+</style>
+
+<script>
+    document.querySelectorAll('input[name="shippingMethod"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            var label = this.closest('.form-check').querySelector('.form-check-label span:last-child');
+            document.getElementById('shippingPreview').textContent = label.textContent;
+        });
+    });
+</script>

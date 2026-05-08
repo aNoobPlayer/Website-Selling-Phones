@@ -13,6 +13,7 @@ public class ProductController : Controller
     private readonly DynamicPricingService _pricing;
     private readonly IHubContext<InventoryHub> _hubContext;
     private const string ReviewsSessionKey = "ProductReviews";
+    private const string CouponsSessionKey = "AppliedCoupons";
 
     public ProductController(MockDataService mockData, DynamicPricingService pricing, IHubContext<InventoryHub> hubContext)
     {
@@ -21,12 +22,12 @@ public class ProductController : Controller
         _hubContext = hubContext;
     }
 
+    [ResponseCache(Duration = 60)]
     public IActionResult Index(string? brand, decimal? minPrice, decimal? maxPrice, string? category,
-        string? condition, string? sort, string? search, int page = 1, int pageSize = 8)
+        string? condition, string? sort, string? search, string? view, int page = 1, int pageSize = 8)
     {
         var phones = _mockData.FilterPhones(brand, minPrice, maxPrice, category, condition);
 
-        // Search
         if (!string.IsNullOrWhiteSpace(search))
         {
             phones = phones.Where(p =>
@@ -36,7 +37,6 @@ public class ProductController : Controller
             ).ToList();
         }
 
-        // Sorting
         phones = sort?.ToLower() switch
         {
             "price_asc" => phones.OrderBy(p => p.DiscountedPrice).ToList(),
@@ -44,11 +44,11 @@ public class ProductController : Controller
             "name_asc" => phones.OrderBy(p => p.Name).ToList(),
             "name_desc" => phones.OrderByDescending(p => p.Name).ToList(),
             "newest" => phones.OrderByDescending(p => p.CreatedAt).ToList(),
-            "rating" => new Random().Next(0, 2) == 1 ? phones.OrderBy(p => p.Id).ToList() : phones.OrderByDescending(p => p.Id).ToList(),
+            "rating" => phones.OrderByDescending(p => p.Rating).ToList(),
+            "popularity" => phones.OrderByDescending(p => p.TotalSold).ToList(),
             _ => phones.OrderByDescending(p => p.IsFeatured).ThenBy(p => p.Name).ToList()
         };
 
-        // Pagination
         var totalItems = phones.Count;
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
         var pagedPhones = phones.Skip((page - 1) * pageSize).Take(pageSize).ToList();
@@ -57,8 +57,8 @@ public class ProductController : Controller
         ViewData["Categories"] = _mockData.GetCategories();
         ViewData["CurrentBrand"] = brand;
         ViewData["CurrentCategory"] = category;
-        ViewData["MinPrice"] = minPrice;
-        ViewData["MaxPrice"] = maxPrice;
+        ViewData["MinPrice"] = minPrice ?? 0;
+        ViewData["MaxPrice"] = maxPrice ?? 1500;
         ViewData["CurrentSort"] = sort ?? "featured";
         ViewData["CurrentCondition"] = condition;
         ViewData["Search"] = search;
@@ -66,13 +66,13 @@ public class ProductController : Controller
         ViewData["TotalPages"] = totalPages;
         ViewData["TotalItems"] = totalItems;
         ViewData["PageSize"] = pageSize;
-
-        var lowStock = phones.Where(p => p.StockQuantity <= 5 && p.StockQuantity > 0).ToList();
-        ViewData["LowStockAlerts"] = lowStock;
+        ViewData["ViewMode"] = view ?? "grid";
+        ViewData["ActiveFilterCount"] = (brand != null ? 1 : 0) + (category != null ? 1 : 0) + (condition != null ? 1 : 0) + (minPrice != null || maxPrice != null ? 1 : 0);
 
         return View(pagedPhones);
     }
 
+    [ResponseCache(Duration = 30)]
     public IActionResult Details(int id)
     {
         var phone = _mockData.GetPhoneById(id);
@@ -83,8 +83,8 @@ public class ProductController : Controller
 
         ViewData["CalculatedPrice"] = calculatedPrice;
         ViewData["PromoMessage"] = promoMessage;
+        ViewData["RelatedPhones"] = _mockData.GetRelatedPhones(phone, 4);
 
-        // Get reviews
         var reviewsJson = HttpContext.Session.GetString(ReviewsSessionKey);
         var allReviews = string.IsNullOrEmpty(reviewsJson)
             ? new List<Review>()
@@ -121,5 +121,30 @@ public class ProductController : Controller
 
         TempData["ReviewSuccess"] = "Your review has been submitted!";
         return RedirectToAction("Details", new { id = phoneId });
+    }
+
+    [HttpGet]
+    public IActionResult SearchSuggestions(string q)
+    {
+        if (string.IsNullOrWhiteSpace(q) || q.Length < 2)
+            return Json(Array.Empty<object>());
+
+        var results = _mockData.SearchPhones(q).Select(p => new {
+            id = p.Id,
+            name = p.Name,
+            brand = p.Brand,
+            price = p.Price,
+            image = p.ImageUrl
+        });
+
+        return Json(results);
+    }
+
+    [HttpGet]
+    public IActionResult QuickView(int id)
+    {
+        var phone = _mockData.GetPhoneById(id);
+        if (phone == null) return NotFound();
+        return PartialView("_QuickView", phone);
     }
 }
