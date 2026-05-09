@@ -1,7 +1,7 @@
 @model Website_Selling_Phones.Models.Phone
 @{
     ViewData["Title"] = Model.Name;
-    Layout = "_ItemLayout";
+    Layout = "_ShopLayout";
     var calculatedPrice = ViewData["CalculatedPrice"] as decimal?;
     var promoMessage = ViewData["PromoMessage"] as string;
     var reviews = ViewData["Reviews"] as List<Website_Selling_Phones.Models.Review> ?? new();
@@ -15,7 +15,7 @@
         <li class="breadcrumb-item"><a href="/Product">Phones</a></li>
         @if (!string.IsNullOrEmpty(Model.Brand))
         {<li class="breadcrumb-item"><a href="/Product?brand=@Model.Brand">@Model.Brand</a></li>}
-        <li class="breadcrumb-item active">@Model.Name</li>
+        <li class="breadcrumb-item active text-truncate" style="max-width:200px;">@Model.Name</li>
     </ol>
 </nav>
 
@@ -23,44 +23,42 @@
     <!-- Image Gallery -->
     <div class="col-lg-6">
         <div class="product-gallery">
-            <div class="gallery-main mb-3">
-                <img id="mainImage" src="@Model.ImageUrl" class="img-fluid w-100 rounded-3" alt="@Model.Name" style="min-height:400px; object-fit:cover;">
-                <span class="gallery-badge @Model.ConditionBadgeClass">@Model.ConditionDisplayName</span>
+            <div class="gallery-main mb-3 position-relative">
+                <img id="mainImage" src="@Model.ImageUrl" class="img-fluid w-100 rounded-3 gallery-fade-img" alt="@Model.Name" style="min-height:400px; object-fit:cover;">
+                <span class="condition-badge position-absolute top-0 start-0 m-3 @Model.ConditionBadgeClass">@Model.ConditionDisplayName</span>
                 @if (Model.DiscountPercentage > 0)
-                {<span class="discount-badge-lg">-@Model.DiscountPercentage%</span>}
+                {<span class="discount-badge discount-badge-detail position-absolute top-0 end-0 m-3">-@Model.DiscountPercentage%</span>}
             </div>
             @if (Model.GalleryImages.Any())
             {
-                <div class="gallery-thumbnails d-flex gap-2 overflow-auto">
+                <div class="gallery-thumbnails d-flex gap-2 overflow-auto pb-1">
                     @foreach (var img in Model.GalleryImages)
                     {
                         <img src="@img" class="gallery-thumb rounded-2 border @(img == Model.GalleryImages.First() ? "active" : "")"
-                             alt="Thumbnail" onclick="document.getElementById('mainImage').src='@img'; document.querySelectorAll('.gallery-thumb').forEach(t=>t.classList.remove('active')); this.classList.add('active');">
+                             alt="Thumbnail" onclick="switchGalleryImage(this, '@img')">
                     }
                 </div>
             }
         </div>
 
-        <!-- Specifications Table -->
         @if (Model.Specs != null)
         {
             <div class="mt-4">
                 <h4 class="fw-bold mb-3">Specifications</h4>
                 <table class="table table-bordered specs-table">
-                    <tr><td class="spec-label">Display</td><td>@Model.Specs.Display</td></tr>
-                    <tr><td class="spec-label">Processor</td><td>@Model.Specs.Processor</td></tr>
-                    <tr><td class="spec-label">RAM</td><td>@Model.Specs.Ram</td></tr>
-                    <tr><td class="spec-label">Storage</td><td>@Model.Specs.Storage</td></tr>
-                    <tr><td class="spec-label">Camera</td><td>@Model.Specs.Camera</td></tr>
-                    <tr><td class="spec-label">Battery</td><td>@Model.Specs.Battery</td></tr>
-                    <tr><td class="spec-label">OS</td><td>@Model.Specs.Os</td></tr>
-                    <tr><td class="spec-label">Weight</td><td>@Model.Specs.Weight</td></tr>
-                    <tr><td class="spec-label">Connectivity</td><td>@Model.Specs.Connectivity</td></tr>
+                    <tr><td class="fw-semibold bg-body-tertiary" style="width:130px;">Display</td><td>@Model.Specs.Display</td></tr>
+                    <tr><td class="fw-semibold bg-body-tertiary">Processor</td><td>@Model.Specs.Processor</td></tr>
+                    <tr><td class="fw-semibold bg-body-tertiary">RAM</td><td>@Model.Specs.Ram</td></tr>
+                    <tr><td class="fw-semibold bg-body-tertiary">Storage</td><td id="specStorage">@Model.Specs.Storage</td></tr>
+                    <tr><td class="fw-semibold bg-body-tertiary">Camera</td><td>@Model.Specs.Camera</td></tr>
+                    <tr><td class="fw-semibold bg-body-tertiary">Battery</td><td>@Model.Specs.Battery</td></tr>
+                    <tr><td class="fw-semibold bg-body-tertiary">OS</td><td>@Model.Specs.Os</td></tr>
+                    <tr><td class="fw-semibold bg-body-tertiary">Weight</td><td>@Model.Specs.Weight</td></tr>
+                    <tr><td class="fw-semibold bg-body-tertiary">Connectivity</td><td>@Model.Specs.Connectivity</td></tr>
                 </table>
             </div>
         }
 
-        <!-- Reviews Section -->
         <div class="mt-4">
             <h4 class="fw-bold mb-3">
                 <i class="bi bi-star-fill text-warning me-1"></i>
@@ -122,7 +120,6 @@
         @if (!string.IsNullOrEmpty(promoMessage))
         {<div class="promo-banner mb-4"><i class="bi bi-megaphone me-2"></i>@promoMessage</div>}
 
-        <!-- Variants -->
         @{
             var colors = Model.Variants.Where(v => v.Type == "Color").ToList();
             var storages = Model.Variants.Where(v => v.Type == "Storage").ToList();
@@ -131,9 +128,9 @@
         {
             <div class="mb-3">
                 <label class="form-label fw-semibold">Color</label>
-                <div class="d-flex gap-2 flex-wrap">
+                <div class="d-flex gap-2 flex-wrap" id="colorVariantGroup">
                     @foreach (var c in colors)
-                    {<button class="btn btn-outline-dark btn-sm variant-btn">@c.Value</button>}
+                    {<button class="btn btn-outline-dark btn-sm variant-btn" data-type="Color" data-value="@c.Value">@c.Value</button>}
                 </div>
             </div>
         }
@@ -141,10 +138,10 @@
         {
             <div class="mb-3">
                 <label class="form-label fw-semibold">Storage</label>
-                <div class="d-flex gap-2 flex-wrap">
+                <div class="d-flex gap-2 flex-wrap" id="storageVariantGroup">
                     @foreach (var s in storages)
                     {
-                        <button class="btn btn-outline-dark btn-sm variant-btn @(storages.IndexOf(s) == 0 ? "active" : "")">
+                        <button class="btn btn-outline-dark btn-sm variant-btn @(storages.IndexOf(s) == 0 ? "active" : "")" data-type="Storage" data-value="@s.Value">
                             @s.Value @(s.PriceModifier > 0 ? $"(+${s.PriceModifier})" : "")
                         </button>
                     }
@@ -152,7 +149,6 @@
             </div>
         }
 
-        <!-- Stock Status -->
         <div class="mb-3">
             <span class="fw-bold @Model.StockCssClass">
                 @if (Model.StockQuantity > 5)
@@ -164,40 +160,33 @@
             </span>
         </div>
 
-        <!-- Quantity Selector -->
         <div class="mb-3">
             <label class="form-label fw-semibold">Quantity</label>
-            <div class="input-group quantity-selector" style="max-width:140px;">
+            <div class="input-group" style="max-width:140px;">
                 <button class="btn btn-outline-secondary" type="button" onclick="changeQty(-1)">-</button>
                 <input type="number" id="qtyInput" class="form-control text-center" value="1" min="1" max="@Model.StockQuantity" readonly>
                 <button class="btn btn-outline-secondary" type="button" onclick="changeQty(1)">+</button>
             </div>
         </div>
 
-        <!-- Action Buttons -->
         <div class="d-flex gap-2 mb-4 flex-wrap">
             @if (Model.StockQuantity > 0)
             {
-                <form method="post" action="/Cart/Add" class="flex-grow-1">
-                    <input type="hidden" name="id" value="@Model.Id">
-                    <input type="hidden" name="quantity" id="cartQty" value="1">
-                    <button type="submit" class="btn btn-primary btn-lg w-100 btn-add-to-cart">
-                        <i class="bi bi-cart-plus me-2"></i>Add to Cart
-                    </button>
-                </form>
-                <a href="/Order/Checkout" class="btn btn-outline-primary btn-lg px-4">Buy Now</a>
+                <button id="addToCartBtn" class="btn btn-primary btn-lg flex-grow-1 btn-add-to-cart">
+                    <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                </button>
+                <button id="buyNowBtn" class="btn btn-outline-primary btn-lg px-4">Buy Now</button>
             }
             else
             {<button class="btn btn-secondary btn-lg flex-grow-1" disabled><i class="bi bi-x-circle me-2"></i>Out of Stock</button>}
             <button class="btn btn-outline-secondary btn-lg px-3 wishlist-btn" data-id="@Model.Id">
                 <i class="bi bi-heart"></i>
             </button>
-            <button class="btn btn-outline-secondary btn-lg px-3" onclick="navigator.share&&navigator.share({title:'@Model.Name',url:window.location.href})">
+            <button id="shareBtn" class="btn btn-outline-secondary btn-lg px-3">
                 <i class="bi bi-share"></i>
             </button>
         </div>
 
-        <!-- Trust Badges -->
         <div class="trust-strip p-3 rounded-3 border mb-4">
             <h6 class="fw-bold mb-2 small text-uppercase text-muted">Why buy from us</h6>
             <div class="row g-2 small">
@@ -208,10 +197,14 @@
             </div>
         </div>
 
-        <!-- Submit Review -->
         <div class="mt-3">
             <h6 class="fw-bold mb-2">Write a Review</h6>
-            <form method="post" action="/Product/SubmitReview">
+            @if (TempData["ReviewSuccess"] != null)
+            {<div class="alert alert-success py-2 mb-3">@TempData["ReviewSuccess"]</div>}
+            @if (TempData["ReviewError"] != null)
+            {<div class="alert alert-danger py-2 mb-3">@TempData["ReviewError"]</div>}
+            <div id="reviewError" class="alert alert-danger py-2 mb-3 d-none"></div>
+            <form method="post" action="/Product/SubmitReview" onsubmit="return validateReview(this)">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="phoneId" value="@Model.Id">
                 <div class="mb-2">
@@ -223,14 +216,13 @@
                         }
                     </div>
                 </div>
-                <textarea name="comment" class="form-control mb-2" rows="2" placeholder="Share your thoughts..."></textarea>
+                <textarea name="comment" class="form-control mb-2" rows="2" placeholder="Share your thoughts (min 10 characters)..." required minlength="10" maxlength="500"></textarea>
                 <button type="submit" class="btn btn-outline-primary btn-sm">Submit Review</button>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Related Products -->
 @if (relatedPhones.Any())
 {
     <section class="mt-5">
@@ -259,32 +251,12 @@
     </section>
 }
 
-<style>
-    .gallery-main { position: relative; }
-    .gallery-badge { position: absolute; top: 12px; left: 12px; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
-    .badge-new { background: #34a853; color: #fff; }
-    .badge-refurbished { background: #1a73e8; color: #fff; }
-    .badge-used { background: #5f6368; color: #fff; }
-    .discount-badge-lg { position: absolute; top: 12px; right: 12px; padding: 6px 14px; background: #ea4335; color: #fff; border-radius: 20px; font-weight: 700; font-size: 0.9rem; }
-    .gallery-thumb { width: 70px; height: 70px; object-fit: cover; cursor: pointer; transition: 0.2s; }
-    .gallery-thumb.active { border: 2px solid #1a73e8 !important; }
-    .gallery-thumb:hover { opacity: 0.8; }
-    .specs-table td { padding: 8px 12px; font-size: 0.9rem; }
-    .specs-table .spec-label { font-weight: 600; width: 130px; background: #f8f9fa; }
-    .variant-btn.active { background: #1a73e8; color: #fff; border-color: #1a73e8; }
-    .trust-strip { background: #f8f9fa; }
-    .star-rating { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 2px; }
-    .star-rating input { display: none; }
-    .star-rating label { cursor: pointer; color: #ddd; font-size: 1.3rem; transition: color 0.2s; }
-    .star-rating label:hover, .star-rating label:hover ~ label, .star-rating input:checked ~ label { color: #f59e0b; }
-    .breadcrumb { background: none; padding: 0; }
-    .review-card { background: #fff; }
-    .related-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-    .related-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
-</style>
-
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script type="module">
+        import { initVariantSwitcher } from '/js/modules/variant-switcher.js';
+        initVariantSwitcher(@Model.Id);
+    </script>
     <script>
         function changeQty(delta) {
             var input = document.getElementById('qtyInput');
@@ -292,30 +264,100 @@
             if (val < 1) val = 1;
             if (val > @Model.StockQuantity) val = @Model.StockQuantity;
             input.value = val;
-            document.getElementById('cartQty').value = val;
         }
 
+        function switchGalleryImage(thumb, src) {
+            var main = document.getElementById('mainImage');
+            main.style.opacity = '0';
+            setTimeout(() => { main.src = src; main.style.opacity = '1'; }, 300);
+            document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
+        }
+
+        function updateCartBadge(count) {
+            document.querySelectorAll('.cart-count-badge').forEach(b => {
+                b.textContent = count;
+                b.style.display = count > 0 ? '' : 'none';
+            });
+        }
+
+        function showToast(msg) {
+            var toast = document.createElement('div');
+            toast.className = 'cart-toast show';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        // Add to Cart - AJAX
+        document.getElementById('addToCartBtn')?.addEventListener('click', async function() {
+            var qty = document.getElementById('qtyInput').value;
+            var color = document.querySelector('.variant-btn[data-type="Color"].active')?.dataset.value || '';
+            var storage = document.querySelector('.variant-btn[data-type="Storage"].active')?.dataset.value || '';
+            var params = new URLSearchParams();
+            params.append('id', '@Model.Id');
+            params.append('quantity', qty);
+            if (color) params.append('color', color);
+            if (storage) params.append('storage', storage);
+
+            var resp = await fetch('/Cart/AddAjax', { method: 'POST', body: params });
+            var data = await resp.json();
+
+            this.classList.add('cart-success');
+            this.innerHTML = '<i class="bi bi-check-lg fs-5"></i>';
+            setTimeout(() => {
+                this.classList.remove('cart-success');
+                this.innerHTML = '<i class="bi bi-cart-plus me-2"></i>Add to Cart';
+            }, 1200);
+
+            showToast(data.itemName + ' added to cart!');
+            updateCartBadge(data.totalItems);
+        });
+
+        // Buy Now - add to cart then redirect
+        document.getElementById('buyNowBtn')?.addEventListener('click', async function() {
+            var qty = document.getElementById('qtyInput').value;
+            var color = document.querySelector('.variant-btn[data-type="Color"].active')?.dataset.value || '';
+            var storage = document.querySelector('.variant-btn[data-type="Storage"].active')?.dataset.value || '';
+            var params = new URLSearchParams();
+            params.append('id', '@Model.Id');
+            params.append('quantity', qty);
+            if (color) params.append('color', color);
+            if (storage) params.append('storage', storage);
+
+            await fetch('/Cart/AddAndCheckout', { method: 'POST', body: params });
+            window.location.href = '/Order/Checkout';
+        });
+
+        // SignalR
         const connection = new signalR.HubConnectionBuilder().withUrl("/hubs/inventory").build();
         connection.on("ReceivePriceUpdate", data => {
             if (data.productName === "@Model.Name") {
                 const tag = document.querySelector('.price-tag');
-                if (tag) tag.textContent = '$' + data.newPrice.toFixed(2);
+                if (tag) {
+                    const target = data.newPrice;
+                    const current = parseFloat(tag.textContent.replace(/[^0-9.]/g, ''));
+                    if (!isNaN(current)) {
+                        const start = performance.now();
+                        function update(now) {
+                            const progress = Math.min((now - start) / 400, 1);
+                            const eased = 1 - Math.pow(1 - progress, 3);
+                            tag.textContent = '$' + (current + (target - current) * eased).toFixed(2);
+                            if (progress < 1) requestAnimationFrame(update);
+                        }
+                        requestAnimationFrame(update);
+                    }
+                }
             }
         });
         connection.start().catch(err => console.log("SignalR:", err));
 
-        document.querySelectorAll('.variant-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                btn.parentElement.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            });
-        });
-
+        // Wishlist
         fetch('/Wishlist/IsInWishlist?id=@Model.Id')
             .then(r => r.json())
             .then(data => {
-                var btn = document.querySelector('.wishlist-btn i');
-                if (data.inWishlist) { btn.classList.remove('bi-heart'); btn.classList.add('bi-heart-fill', 'text-danger'); }
+                var icon = document.querySelector('.wishlist-btn i');
+                if (data.inWishlist) { icon.classList.remove('bi-heart'); icon.classList.add('bi-heart-fill', 'text-danger'); }
             });
 
         document.querySelector('.wishlist-btn')?.addEventListener('click', function() {
@@ -328,5 +370,39 @@
                     else { icon.classList.remove('bi-heart-fill', 'text-danger'); icon.classList.add('bi-heart'); }
                 });
         });
+
+        // Share - clipboard fallback
+        document.getElementById('shareBtn')?.addEventListener('click', function() {
+            var url = window.location.href;
+            if (navigator.share) {
+                navigator.share({ title: '@Model.Name', url: url });
+            } else {
+                navigator.clipboard.writeText(url).then(() => {
+                    var btn = this;
+                    var orig = btn.innerHTML;
+                    btn.innerHTML = '<i class="bi bi-clipboard-check text-success"></i>';
+                    setTimeout(() => { btn.innerHTML = orig; }, 1500);
+                });
+            }
+        });
+
+        // Review validation
+        function validateReview(form) {
+            var comment = form.querySelector('textarea[name="comment"]').value.trim();
+            var rating = form.querySelector('input[name="rating"]:checked')?.value;
+            var error = document.getElementById('reviewError');
+            if (!rating || parseInt(rating) < 1) {
+                error.textContent = 'Please select a star rating.';
+                error.classList.remove('d-none');
+                return false;
+            }
+            if (comment.length < 10) {
+                error.textContent = 'Please write at least 10 characters for your review.';
+                error.classList.remove('d-none');
+                return false;
+            }
+            error.classList.add('d-none');
+            return true;
+        }
     </script>
 }

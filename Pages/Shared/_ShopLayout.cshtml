@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="view-transition" content="same-origin" />
     <title>@ViewData["Title"] - PhoneStore</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -24,6 +25,7 @@
     <!-- Glassmorphism Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark glass-nav sticky-top">
         <div class="container">
+            @{ var currentPath = Context.Request.Path.Value ?? "/"; }
             <a class="navbar-brand fw-bold fs-4" href="/">
                 <i class="bi bi-phone-fill text-primary me-2"></i>PhoneStore
             </a>
@@ -32,8 +34,8 @@
             </button>
             <div class="collapse navbar-collapse" id="shopNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/Product">Shop</a></li>
+                    <li class="nav-item"><a class="nav-link @(currentPath == "/" ? "active" : "")" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link @(currentPath == "/Product" ? "active" : "")" href="/Product">Shop</a></li>
                     <li class="nav-item"><a class="nav-link" href="/Product?condition=New">New</a></li>
                     <li class="nav-item"><a class="nav-link" href="/Product?condition=Refurbished">Refurbished</a></li>
                 </ul>
@@ -139,23 +141,34 @@
 
     <!-- Mobile Bottom Navigation -->
     <nav class="mobile-bottom-nav d-lg-none">
-        <a href="/" class="mobile-nav-item active">
+        <a href="/" class="mobile-nav-item @(currentPath == "/" ? "active" : "")">
             <i class="bi bi-house-fill"></i><span>Home</span>
         </a>
-        <a href="/Product" class="mobile-nav-item">
-            <i class="bi bi-search"></i><span>Search</span>
-        </a>
-        <a href="/Product" class="mobile-nav-item">
+        <a href="/Product" class="mobile-nav-item @(currentPath == "/Product" ? "active" : "")">
             <i class="bi bi-grid-fill"></i><span>Shop</span>
         </a>
-        <a href="/Cart" class="mobile-nav-item cart-nav-item">
+        <a href="/Cart" class="mobile-nav-item cart-nav-item @(currentPath == "/Cart" ? "active" : "")">
             <i class="bi bi-cart3"></i><span>Cart</span>
             <span class="cart-count-badge d-none">0</span>
         </a>
-        <a href="/Account/Login" class="mobile-nav-item">
-            <i class="bi bi-person-fill"></i><span>Account</span>
-        </a>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a href="/Account/Manage" class="mobile-nav-item @(currentPath.StartsWith("/Account") ? "active" : "")">
+                <i class="bi bi-person-check-fill"></i><span>Account</span>
+            </a>
+        }
+        else
+        {
+            <a href="/Account/Login" class="mobile-nav-item">
+                <i class="bi bi-person-fill"></i><span>Sign In</span>
+            </a>
+        }
     </nav>
+
+    <!-- Back to Top -->
+    <button id="backToTop" class="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">
+        <i class="bi bi-chevron-up"></i>
+    </button>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -177,6 +190,9 @@
             input.value = '';
             setTimeout(() => { btn.textContent = orig; btn.classList.remove('btn-success'); btn.classList.add('btn-primary'); }, 2000);
         }
+        window.addEventListener('scroll', () => {
+            document.getElementById('backToTop')?.classList.toggle('visible', window.scrollY > 400);
+        });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

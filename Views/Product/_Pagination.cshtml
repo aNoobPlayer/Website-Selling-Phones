@@ -1,0 +1,37 @@
+@{
+    var totalPages = ViewData["TotalPages"] as int? ?? 1;
+    var currentPage = ViewData["CurrentPage"] as int? ?? 1;
+    var brand = ViewData["CurrentBrand"] as string ?? "";
+    var category = ViewData["CurrentCategory"] as string ?? "";
+    var condition = ViewData["CurrentCondition"] as string ?? "";
+    var sort = ViewData["CurrentSort"] as string ?? "featured";
+    var search = ViewData["Search"] as string ?? "";
+    var view = ViewData["ViewMode"] as string ?? "grid";
+    var minPrice = ViewData["MinPrice"] as decimal?;
+    var maxPrice = ViewData["MaxPrice"] as decimal?;
+    var baseUrl = $"?brand={brand}&category={category}&condition={condition}&sort={sort}&search={search}&view={view}";
+    if (minPrice.HasValue) baseUrl += $"&minPrice={minPrice.Value}";
+    if (maxPrice.HasValue) baseUrl += $"&maxPrice={maxPrice.Value}";
+    baseUrl += "&page=";
+}
+@if (totalPages > 1)
+{
+    var prevPage = currentPage - 1;
+    var nextPage = currentPage + 1;
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <a class="page-link" href="@(baseUrl)@prevPage" data-filter-link>&laquo; Previous</a>
+            </li>
+            @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link" href="@(baseUrl)@i" data-filter-link>@i</a>
+                </li>
+            }
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <a class="page-link" href="@(baseUrl)@nextPage" data-filter-link>Next &raquo;</a>
+            </li>
+        </ul>
+    </nav>
+}

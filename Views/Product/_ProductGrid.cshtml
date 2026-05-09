@@ -1,0 +1,86 @@
+@model (List<Website_Selling_Phones.Models.Phone> phones, string viewMode)
+@{
+    var phones = Model.phones;
+    var viewMode = Model.viewMode;
+}
+@if (viewMode == "list")
+{
+    @foreach (var phone in phones)
+    {
+        <article class="product-card-list skeleton-ready mb-3 border rounded p-3 d-flex gap-3">
+            <figure class="m-0" style="flex:0 0 180px;">
+                <img src="@phone.ImageUrl" alt="@phone.Name" loading="lazy" class="img-fluid rounded" style="width:180px; height:180px; object-fit:cover;">
+            </figure>
+            <div class="flex-grow-1">
+                <span class="brand-label">@phone.Brand</span>
+                <h3 class="h5 mb-1">@phone.Name</h3>
+                <div class="text-warning small mb-1">
+                    @for (int i = 1; i <= 5; i++)
+                    {<i class="bi @(i <= Math.Round(phone.Rating) ? "bi-star-fill" : "bi-star")"></i>}
+                    <span class="text-muted ms-1">(@phone.ReviewCount)</span>
+                </div>
+                <p class="small text-muted mb-2">@phone.Description</p>
+                <div class="d-flex align-items-baseline gap-2 mb-2">
+                    @if (phone.DiscountPercentage > 0)
+                    {<span class="text-decoration-line-through text-muted small">$@phone.Price.ToString("F0")</span>}
+                    <span class="fw-bold text-primary">$@phone.DiscountedPrice.ToString("F0")</span>
+                    @if (phone.DiscountPercentage > 0)
+                    {<span class="badge bg-danger">-@phone.DiscountPercentage%</span>}
+                </div>
+                <div class="d-flex gap-1">
+                    <a href="/Product/Details/@phone.Id" class="btn btn-outline-primary btn-sm">Details</a>
+                    <form method="post" action="/Cart/AddAjax" class="ajax-cart-form">
+                        <input type="hidden" name="id" value="@phone.Id">
+                        <button type="submit" class="btn btn-primary btn-sm">Add to Cart</button>
+                    </form>
+                </div>
+            </div>
+        </article>
+    }
+}
+else
+{
+    @foreach (var phone in phones)
+    {
+        <article class="product-card-v2 skeleton-ready" data-animate="fadeInUp">
+            <figure class="product-image-container">
+                <img src="@phone.ImageUrl" alt="@phone.Name" loading="lazy">
+                <figcaption class="condition-badge @phone.ConditionBadgeClass">@phone.ConditionDisplayName</figcaption>
+                @if (phone.DiscountPercentage > 0)
+                {<span class="discount-badge">-@phone.DiscountPercentage%</span>}
+                <div class="quick-actions">
+                    <button class="btn btn-light btn-sm rounded-circle wishlist-quick-btn" data-id="@phone.Id" title="Wishlist"><i class="bi bi-heart"></i></button>
+                </div>
+            </figure>
+            <div class="product-info">
+                <span class="brand-label">@phone.Brand</span>
+                <h3>@phone.Name</h3>
+                <div class="text-warning small mb-1">
+                    @for (int i = 1; i <= 5; i++)
+                    {<i class="bi @(i <= Math.Round(phone.Rating) ? "bi-star-fill" : "bi-star")"></i>}
+                    <span class="text-muted ms-1">(@phone.ReviewCount)</span>
+                </div>
+                <div class="price-row">
+                    @if (phone.DiscountPercentage > 0)
+                    {
+                        <span class="original-price">$@phone.Price.ToString("F0")</span>
+                        <span class="current-price">$@phone.DiscountedPrice.ToString("F0")</span>
+                    }
+                    else
+                    {<span class="current-price">$@phone.Price.ToString("F0")</span>}
+                </div>
+                @if (phone.StockQuantity <= 3 && phone.StockQuantity > 0)
+                {<small class="text-warning stock-urgent">Only @phone.StockQuantity left!</small>}
+                else if (phone.StockQuantity == 0)
+                {<small class="text-danger">Out of stock</small>}
+            </div>
+            <footer class="product-actions d-flex gap-1">
+                <a href="/Product/Details/@phone.Id" class="btn btn-outline-primary btn-sm flex-grow-1">Details</a>
+                <form method="post" action="/Cart/AddAjax" class="flex-grow-1 ajax-cart-form">
+                    <input type="hidden" name="id" value="@phone.Id">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">Add to Cart</button>
+                </form>
+            </footer>
+        </article>
+    }
+}

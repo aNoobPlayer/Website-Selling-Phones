@@ -76,6 +76,21 @@ public class CartController : Controller
     }
 
     [HttpPost]
+    public IActionResult AddAndCheckout(int id, int quantity = 1, string? color = null, string? storage = null)
+    {
+        var phone = _mockData.GetPhoneById(id);
+        if (phone == null) return NotFound();
+
+        var cart = GetCart();
+        var existing = cart.Items.FirstOrDefault(i => i.PhoneId == id);
+        if (existing != null) existing.Quantity = quantity;
+        else cart.AddItem(phone, quantity);
+
+        SaveCart(cart);
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
     public IActionResult AddAjax(int id, int quantity = 1)
     {
         var phone = _mockData.GetPhoneById(id);
@@ -85,7 +100,7 @@ public class CartController : Controller
         cart.AddItem(phone, quantity);
         SaveCart(cart);
 
-        return Json(new { success = true, totalItems = cart.TotalItems, totalPrice = cart.TotalPrice.ToString("F2") });
+        return Json(new { success = true, totalItems = cart.TotalItems, totalPrice = cart.TotalPrice.ToString("F2"), itemName = phone.Name });
     }
 
     [HttpPost]

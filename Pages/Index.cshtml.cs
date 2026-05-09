@@ -1,26 +1,53 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using Website_Selling_Phones.Data;
 using Website_Selling_Phones.Models;
+using Website_Selling_Phones.Services;
 
 namespace Website_Selling_Phones.Pages;
 
 public class IndexModel : PageModel
 {
-    private readonly ApplicationDbContext _context;
+    private readonly MockDataService _mockData;
 
-    public IndexModel(ApplicationDbContext context)
+    public IndexModel(MockDataService mockData)
     {
-        _context = context;
+        _mockData = mockData;
     }
 
-    public List<Product> FeaturedProducts { get; set; } = new();
+    public List<Phone> FeaturedPhones { get; set; } = new();
+    public List<Phone> PopularPhones { get; set; } = new();
+    public List<BrandInfo> TopBrands { get; set; } = new();
 
-    public async Task OnGetAsync()
+    public void OnGet()
     {
-        FeaturedProducts = await _context.Products
+        FeaturedPhones = _mockData.GetAllPhones()
             .Where(p => p.IsFeatured)
+            .OrderByDescending(p => p.Rating)
             .Take(6)
-            .ToListAsync();
+            .ToList();
+
+        PopularPhones = _mockData.GetPopularPhones(6);
+
+        TopBrands = _mockData.GetBrands()
+            .Select(b => new BrandInfo { Name = b, Slug = b, Icon = BrandIconFor(b) })
+            .ToList();
     }
+
+    private static string BrandIconFor(string name) => name.ToLower() switch
+    {
+        "apple" => "bi-apple",
+        "samsung" => "bi-phone-flip",
+        "google" => "bi-google",
+        "oneplus" => "bi-circle",
+        "xiaomi" => "bi-grid",
+        "nothing" => "bi-lightning-charge",
+        "motorola" => "bi-phone",
+        _ => "bi-phone"
+    };
+}
+
+public class BrandInfo
+{
+    public string Name { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
+    public string Icon { get; set; } = "bi-phone";
 }
