@@ -28,7 +28,7 @@
 
                 @if (step <= 1)
                 {
-                    <div class="border rounded p-4 mb-3">
+                    <div class="checkout-section-card">
                         <h5 class="fw-bold mb-3"><i class="bi bi-truck me-2"></i>Shipping Address</h5>
                         <div class="row g-2">
                             <div class="col-md-6">
@@ -49,11 +49,11 @@
 
                 @if (step <= 2)
                 {
-                    <div class="border rounded p-4 mb-3">
+                    <div class="checkout-section-card">
                         <h5 class="fw-bold mb-3"><i class="bi bi-box-seam me-2"></i>Shipping Method</h5>
                         @foreach (var opt in shippingOptions)
                         {
-                            <div class="form-check border rounded p-3 mb-2">
+                            <div class="radio-card">
                                 <input class="form-check-input" type="radio" name="shippingMethod" value="@opt.Name.Split(' ')[0]" @(shippingOptions.IndexOf(opt) == 0 ? "checked" : "")>
                                 <label class="form-check-label d-flex justify-content-between w-100">
                                     <span>@opt.Name</span>
@@ -63,15 +63,15 @@
                         }
 
                         <h5 class="fw-bold mb-3 mt-4"><i class="bi bi-credit-card me-2"></i>Payment Method</h5>
-                        <div class="form-check border rounded p-3 mb-2">
+                        <div class="radio-card">
                             <input class="form-check-input" type="radio" name="paymentMethod" value="Credit Card" checked>
                             <label class="form-check-label"><i class="bi bi-credit-card me-1"></i>Credit / Debit Card</label>
                         </div>
-                        <div class="form-check border rounded p-3 mb-2">
+                        <div class="radio-card">
                             <input class="form-check-input" type="radio" name="paymentMethod" value="PayPal">
                             <label class="form-check-label"><i class="bi bi-paypal me-1"></i>PayPal</label>
                         </div>
-                        <div class="form-check border rounded p-3 mb-2">
+                        <div class="radio-card">
                             <input class="form-check-input" type="radio" name="paymentMethod" value="Apple Pay">
                             <label class="form-check-label"><i class="bi bi-apple me-1"></i>Apple Pay</label>
                         </div>
@@ -80,7 +80,7 @@
 
                 @if (step <= 3)
                 {
-                    <div class="border rounded p-4 mb-3">
+                    <div class="checkout-section-card">
                         <h5 class="fw-bold mb-3"><i class="bi bi-list-check me-2"></i>Order Review</h5>
                         @foreach (var item in Model.Items)
                         {
@@ -92,14 +92,14 @@
                     </div>
                 }
 
-                <button type="submit" class="btn btn-primary btn-lg w-100">
+                <button type="submit" class="btn btn-place-order w-100">
                     <i class="bi bi-lock-fill me-1"></i>Place Order
                 </button>
             </form>
         </div>
 
         <div class="col-lg-4">
-            <div class="border rounded p-3 sticky-top" style="top:90px;">
+            <div class="order-summary-card sticky-top" style="top:90px;">
                 <h6 class="fw-bold mb-3">Order Summary</h6>
                 @foreach (var item in Model.Items)
                 {
@@ -123,17 +123,6 @@
         </div>
     </div>
 </div>
-
-<style>
-    .checkout-progress { }
-    .progress-step { display: flex; flex-direction: column; align-items: center; }
-    .progress-step span { width: 32px; height: 32px; border-radius: 50%; background: #e0e0e0; color: #666; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; margin-bottom: 4px; }
-    .progress-step.active span { background: #1a73e8; color: #fff; }
-    .progress-step small { font-size: 0.7rem; color: #999; }
-    .progress-step.active small { color: #1a73e8; font-weight: 600; }
-    .progress-line { width: 60px; height: 3px; background: #e0e0e0; margin: 0 8px 16px; }
-    .progress-line.active { background: #1a73e8; }
-</style>
 
 <script>
     document.querySelectorAll('input[name="shippingMethod"]').forEach(radio => {

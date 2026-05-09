@@ -9,6 +9,7 @@
     var avgRating = Model.Rating > 0 ? Model.Rating : (reviews.Any() ? Math.Round(reviews.Average(r => r.Rating), 1) : 0);
 }
 
+<div class="container py-4">
 <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">Home</a></li>
@@ -25,9 +26,9 @@
         <div class="product-gallery">
             <div class="gallery-main mb-3 position-relative">
                 <img id="mainImage" src="@Model.ImageUrl" class="img-fluid w-100 rounded-3 gallery-fade-img" alt="@Model.Name" style="min-height:400px; object-fit:cover;">
-                <span class="condition-badge position-absolute top-0 start-0 m-3 @Model.ConditionBadgeClass">@Model.ConditionDisplayName</span>
+                <span class="condition-badge @Model.ConditionBadgeClass">@Model.ConditionDisplayName</span>
                 @if (Model.DiscountPercentage > 0)
-                {<span class="discount-badge discount-badge-detail position-absolute top-0 end-0 m-3">-@Model.DiscountPercentage%</span>}
+                {<span class="discount-badge discount-badge-detail">-@Model.DiscountPercentage%</span>}
             </div>
             @if (Model.GalleryImages.Any())
             {
@@ -43,8 +44,8 @@
 
         @if (Model.Specs != null)
         {
-            <div class="mt-4">
-                <h4 class="fw-bold mb-3">Specifications</h4>
+            <div class="mt-4 section-header mb-3">
+                <h4 class="section-title">Specifications</h4>
                 <table class="table table-bordered specs-table">
                     <tr><td class="fw-semibold bg-body-tertiary" style="width:130px;">Display</td><td>@Model.Specs.Display</td></tr>
                     <tr><td class="fw-semibold bg-body-tertiary">Processor</td><td>@Model.Specs.Processor</td></tr>
@@ -226,30 +227,48 @@
 @if (relatedPhones.Any())
 {
     <section class="mt-5">
-        <h3 class="fw-bold mb-3">You May Also Like</h3>
-        <div class="row g-3">
+        <div class="section-header mb-3">
+            <h3 class="section-title">You May Also Like</h3>
+        </div>
+        <div class="product-grid">
             @foreach (var related in relatedPhones)
             {
-                <div class="col-6 col-md-3">
-                    <a href="/Product/Details/@related.Id" class="text-decoration-none text-reset">
-                        <div class="card related-card h-100">
-                            <img src="@related.ImageUrl" class="card-img-top" alt="@related.Name" style="height:180px; object-fit:cover;">
-                            <div class="card-body p-2">
-                                <small class="brand-label d-block">@related.Brand</small>
-                                <p class="card-text small fw-semibold mb-1">@related.Name</p>
-                                <span class="text-primary fw-bold small">$@related.DiscountedPrice.ToString("F0")</span>
-                                <div class="small text-warning">
-                                    @for (int i = 1; i <= 5; i++)
-                                    {<i class="bi @(i <= Math.Round(related.Rating) ? "bi-star-fill" : "bi-star") small"></i>}
-                                </div>
-                            </div>
+                <article class="product-card-v2">
+                    <figure class="product-image-container">
+                        <img src="@related.ImageUrl" alt="@related.Name" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <span class="img-fallback" style="display:none;"><i class="bi bi-phone"></i></span>
+                        <figcaption class="condition-badge @related.ConditionBadgeClass">@related.ConditionDisplayName</figcaption>
+                        @if (related.DiscountPercentage > 0)
+                        {<span class="discount-badge">-@related.DiscountPercentage%</span>}
+                    </figure>
+                    <div class="product-info">
+                        <span class="brand-label">@related.Brand</span>
+                        <h3>@related.Name</h3>
+                        <div class="text-warning small mb-1">
+                            @for (int i = 1; i <= 5; i++)
+                            {<i class="bi @(i <= Math.Round(related.Rating) ? "bi-star-fill" : "bi-star")"></i>}
+                            <span class="text-muted ms-1">(@related.ReviewCount)</span>
                         </div>
-                    </a>
-                </div>
+                        <div class="price-row">
+                            @if (related.DiscountPercentage > 0)
+                            {
+                                <span class="original-price">$@related.Price.ToString("F0")</span>
+                                <span class="current-price">$@related.DiscountedPrice.ToString("F0")</span>
+                            }
+                            else
+                            {<span class="current-price">$@related.Price.ToString("F0")</span>}
+                        </div>
+                    </div>
+                    <footer class="product-actions d-flex gap-1">
+                        <a href="/Product/Details/@related.Id" class="btn btn-outline-primary btn-sm flex-grow-1">View</a>
+                    </footer>
+                </article>
             }
         </div>
     </section>
 }
+
+</div>
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>

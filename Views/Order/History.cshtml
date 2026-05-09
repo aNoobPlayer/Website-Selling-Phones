@@ -10,7 +10,7 @@
     @if (Model.Any())
     {
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle order-history-table">
                 <thead class="table-light">
                     <tr>
                         <th>Order #</th>
@@ -30,7 +30,7 @@
                             <td>@order.OrderItems.Count items</td>
                             <td class="fw-bold">$@order.TotalAmount.ToString("F2")</td>
                             <td>
-                                <span class="badge @(order.Status switch { OrderStatus.Confirmed => "bg-success", OrderStatus.Shipped => "bg-primary", OrderStatus.Delivered => "bg-info", _ => "bg-secondary" })">
+                                <span class="status-badge @(order.Status switch { OrderStatus.Confirmed => "status-badge-confirmed", OrderStatus.Shipped => "status-badge-shipped", OrderStatus.Delivered => "status-badge-delivered", _ => "status-badge-cancelled" })">
                                     @order.Status
                                 </span>
                             </td>

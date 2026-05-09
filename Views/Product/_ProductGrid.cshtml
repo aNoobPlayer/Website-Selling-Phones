@@ -7,9 +7,10 @@
 {
     @foreach (var phone in phones)
     {
-        <article class="product-card-list skeleton-ready mb-3 border rounded p-3 d-flex gap-3">
-            <figure class="m-0" style="flex:0 0 180px;">
-                <img src="@phone.ImageUrl" alt="@phone.Name" loading="lazy" class="img-fluid rounded" style="width:180px; height:180px; object-fit:cover;">
+        <article class="product-card-list skeleton-ready border rounded p-3 d-flex gap-3">
+            <figure>
+                <img src="@phone.ImageUrl" alt="@phone.Name" loading="lazy" class="img-fluid rounded" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <span class="img-fallback" style="display:none;"><i class="bi bi-phone"></i></span>
             </figure>
             <div class="flex-grow-1">
                 <span class="brand-label">@phone.Brand</span>
@@ -44,7 +45,8 @@ else
     {
         <article class="product-card-v2 skeleton-ready" data-animate="fadeInUp">
             <figure class="product-image-container">
-                <img src="@phone.ImageUrl" alt="@phone.Name" loading="lazy">
+                <img src="@phone.ImageUrl" alt="@phone.Name" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <span class="img-fallback" style="display:none;"><i class="bi bi-phone"></i></span>
                 <figcaption class="condition-badge @phone.ConditionBadgeClass">@phone.ConditionDisplayName</figcaption>
                 @if (phone.DiscountPercentage > 0)
                 {<span class="discount-badge">-@phone.DiscountPercentage%</span>}

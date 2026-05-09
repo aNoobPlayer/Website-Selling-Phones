@@ -184,7 +184,11 @@
                     if (values[1] !== '$1500') params.set('maxPrice', values[1].replace('$',''));
                     else params.delete('maxPrice');
                     params.set('page', '1');
-                    window.location.href = window.location.pathname + '?' + params.toString();
+                    if (typeof fetchFilterResults === 'function') {
+                        fetchFilterResults(params);
+                    } else {
+                        window.location.href = window.location.pathname + '?' + params.toString();
+                    }
                 }, 400);
             });
             document.getElementById('minPriceLabel').textContent = '$@minPrice.ToString("F0")';

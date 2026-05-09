@@ -77,6 +77,9 @@ export function initLiquidFilters() {
     });
 }
 
+// Expose globally for inline scripts (price slider)
+window.fetchFilterResults = fetchFilterResults;
+
 async function fetchFilterResults(params, pushState = true) {
     const grid = document.querySelector('#productGrid');
     const pagination = document.querySelector('#paginationBar');

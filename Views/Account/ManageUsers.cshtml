@@ -10,7 +10,7 @@
         <span class="badge bg-primary">@Model.Count users</span>
     </div>
 
-    <div class="card border-0 shadow-sm">
+    <div class="manage-table-card">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
@@ -43,7 +43,7 @@
                                 @if (User.Identity?.Name != user.Email)
                                 {
                                     <form method="post" asp-action="ToggleAdmin" asp-route-userId="@user.Id">
-                                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                                        <button type="submit" class="btn-toggle-admin">
                                             Toggle Admin
                                         </button>
                                     </form>
